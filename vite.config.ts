@@ -16,13 +16,10 @@ export default defineConfig({
       icons: [{ src: `${base}icons/icon-192.png`, sizes: '192x192', type: 'image/png' }, { src: `${base}icons/icon-512.png`, sizes: '512x512', type: 'image/png' }]
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,svg,png}'],
-      navigateFallback: undefined,
-      runtimeCaching: [{
-        urlPattern: ({ request }) => request.mode === 'navigate',
-        handler: 'NetworkFirst',
-        options: { cacheName: 'app-shell', networkTimeoutSeconds: 3, expiration: { maxEntries: 1 } }
-      }]
+      // Keep the HTML and its hashed assets in the same precache revision.
+      globPatterns: ['**/*.{html,js,css,svg,png}'],
+      navigateFallback: 'index.html',
+      cleanupOutdatedCaches: true
     }
   })],
   test: { environment: 'node', include: ['tests/**/*.test.ts'] }

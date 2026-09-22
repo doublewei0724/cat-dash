@@ -51,3 +51,22 @@ test('fits phone and tablet widths with a high density canvas', async ({ browser
     await context.close();
   }
 });
+
+test('menu tiles open the redesigned settings and leaderboard', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: '儲存暱稱' }).click();
+  await expect(page.locator('#game')).toHaveAttribute('data-scene', 'menu');
+  await page.screenshot({ path: 'test-results/menu-redesign.png' });
+  await page.locator('canvas').click({ position: { x: 258, y: 700 } });
+  await expect(page.locator('#game')).toHaveAttribute('data-scene', 'settings');
+  await page.screenshot({ path: 'test-results/settings-redesign.png' });
+  await page.locator('canvas').click({ position: { x: 285, y: 239 } });
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cat-dash:settings:v1') || '{}').musicEnabled)).toBe(false);
+  await page.locator('canvas').click({ position: { x: 195, y: 753 } });
+  await expect(page.locator('#game')).toHaveAttribute('data-scene', 'menu');
+  await page.locator('canvas').click({ position: { x: 132, y: 700 } });
+  await expect(page.locator('#game')).toHaveAttribute('data-scene', 'leaderboard');
+  await page.screenshot({ path: 'test-results/leaderboard-redesign.png' });
+  await page.locator('canvas').click({ position: { x: 195, y: 760 } });
+  await expect(page.locator('#game')).toHaveAttribute('data-scene', 'menu');
+});

@@ -38,7 +38,7 @@ export function button(scene: Phaser.Scene, x: number, y: number, width: number,
   c.on('pointerout', () => scene.tweens.add({ targets: c, scale: 1, duration: 120 }));
   return c;
 }
-export type IconName = 'paw' | 'play' | 'star' | 'gear' | 'pause' | 'replay' | 'home' | 'sparkle';
+export type IconName = 'paw' | 'play' | 'star' | 'gear' | 'pause' | 'replay' | 'home' | 'sparkle' | 'music' | 'sound' | 'vibrate' | 'trophy';
 export function icon(scene: Phaser.Scene, x: number, y: number, name: IconName, size = 50): Phaser.GameObjects.Container {
   const g = scene.add.graphics();
   const ink = C.ink;
@@ -90,6 +90,29 @@ export function icon(scene: Phaser.Scene, x: number, y: number, name: IconName, 
     spark(0, -2, 17, 0xf7c965);
     spark(-16, 10, 7, 0xf5a6a1);
     spark(15, 12, 6, 0xa9d8c0);
+  } else if (name === 'music') {
+    g.lineStyle(3, ink).fillStyle(0xf6b4ac).fillEllipse(-11, 12, 15, 10).strokeEllipse(-11, 12, 15, 10);
+    g.fillStyle(0xf6b4ac).fillEllipse(10, 6, 15, 10).strokeEllipse(10, 6, 15, 10);
+    g.lineStyle(4, ink).lineBetween(-4, 11, -4, -17).lineBetween(17, 5, 17, -22).lineBetween(-4, -17, 17, -22);
+    g.lineStyle(3, 0xf6b4ac).lineBetween(-3, -16, 16, -21);
+  } else if (name === 'sound') {
+    g.lineStyle(2.5, ink).fillStyle(0xffd48e).fillTriangle(-18, -8, -5, -8, 8, -19).strokeTriangle(-18, -8, -5, -8, 8, -19);
+    g.fillTriangle(-18, 8, -5, 8, 8, 19).strokeTriangle(-18, 8, -5, 8, 8, 19);
+    g.fillRect(-18, -8, 17, 16).strokeRect(-18, -8, 17, 16);
+    g.lineStyle(3, ink).beginPath().arc(5, 0, 14, -0.8, 0.8).strokePath();
+    g.beginPath().arc(5, 0, 22, -0.7, 0.7).strokePath();
+  } else if (name === 'vibrate') {
+    g.lineStyle(2.5, ink).fillStyle(0xb7dfc6).fillRoundedRect(-12, -22, 24, 44, 6).strokeRoundedRect(-12, -22, 24, 44, 6);
+    g.fillStyle(C.cream).fillRoundedRect(-8, -16, 16, 28, 3);
+    g.fillStyle(C.orange).fillCircle(0, 17, 2.5);
+    g.lineStyle(2, ink).lineBetween(-18, -12, -22, -8).lineBetween(-18, 3, -22, 7).lineBetween(18, -12, 22, -8).lineBetween(18, 3, 22, 7);
+  } else if (name === 'trophy') {
+    g.lineStyle(2.5, ink).fillStyle(0xf7c965).fillRoundedRect(-13, -19, 26, 26, 6).strokeRoundedRect(-13, -19, 26, 26, 6);
+    g.lineStyle(3, ink).beginPath().arc(-13, -10, 10, 1.4, 4.6).strokePath();
+    g.beginPath().arc(13, -10, 10, -1.45, 1.7).strokePath();
+    g.fillStyle(0xffe9a7).fillEllipse(-5, -11, 7, 13);
+    g.lineStyle(2.5, ink).lineBetween(0, 7, 0, 19);
+    g.fillStyle(0xf7c965).fillRoundedRect(-13, 18, 26, 6, 3).strokeRoundedRect(-13, 18, 26, 6, 3);
   }
   return scene.add.container(x, y, [g]).setScale(size / 50);
 }

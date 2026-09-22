@@ -89,10 +89,12 @@ class MenuScene extends Phaser.Scene {
     fish(this, W/2 + 115, 353).setScale(1.1).setAngle(25);
     const cardW = contentWidth();
     const buttonW = Math.min(cardW - 60, 360);
-    panel(this, (W - cardW)/2, 554, cardW, 251, 0xfffaf0, 28);
+    panel(this, (W - cardW)/2, 554, cardW, 235, 0xfffaf0, 28);
     button(this, W/2, 609, buttonW, 58, '開始遊戲', () => this.scene.start('Game'), undefined, 'play');
-    button(this, W/2, 680, buttonW, 55, '排行榜', () => this.scene.start('Leaderboard'), 0xb7dfc6, 'star');
-    button(this, W/2, 749, buttonW, 55, '設定', () => this.scene.start('Settings'), 0xffe3af, 'gear');
+    const tileW = (buttonW - 12) / 2;
+    button(this, W/2 - tileW/2 - 6, 700, tileW, 64, '排行榜', () => this.scene.start('Leaderboard'), 0xb7dfc6, 'trophy');
+    button(this, W/2 + tileW/2 + 6, 700, tileW, 64, '設定', () => this.scene.start('Settings'), 0xffe3af, 'gear');
+    label(this, W/2, 759, '和朋友一起跑，留下最棒的紀錄', 12, '#a18370');
     if (!getProgress().displayName) this.time.delayedCall(200, () => namePrompt(() => this.scene.restart()));
   }
 }
@@ -387,34 +389,46 @@ class LeaderboardScene extends Phaser.Scene {
     const cardX = (W - cardW) / 2;
     const rowX = cardX + 20;
     const rowW = cardW - 40;
-    panel(this, cardX, 35, cardW, 767);
-    const title = label(this, W/2 + 15, 87, '全球排行榜', 30);
-    icon(this, title.x - title.width / 2 - 24, 87, 'star', 30);
-    label(this, W/2, 122, '最會跑的貓咪都在這裡', 14, '#957661');
-    button(this, cardX + cardW - 53, 170, 76, 41, '更新', () => this.scene.restart(), 0xb7dfc6);
-    const loading = label(this, W/2, 414, isOnline() ? '載入排行榜中…' : '離線模式，暫時無法載入排行榜', 16, '#957661');
+    panel(this, cardX, 35, cardW, 767, 0xfffaf0, 29);
+    icon(this, W/2 - 98, 81, 'trophy', 37);
+    label(this, W/2 + 16, 82, '貓咪排行榜', 28);
+    label(this, W/2, 125, '一起跑出新的好成績！', 14, '#957661');
+    const header = this.add.graphics();
+    header.fillStyle(0xffedca).fillRoundedRect(rowX, 156, rowW, 39, 12);
+    label(this, rowX + 28, 175, '名次', 13, '#8d6b55');
+    label(this, rowX + 76, 175, '旅貓', 13, '#8d6b55').setOrigin(0, .5);
+    label(this, rowX + rowW - 13, 175, '最高分', 13, '#8d6b55').setOrigin(1, .5);
+    button(this, cardX + cardW - 39, 122, 44, 44, '', () => this.scene.restart(), 0xb7dfc6, 'replay');
+    const emptyMascot = drawCat(this, W/2, 385, 1.3);
+    const loading = label(this, W/2, 485, isOnline() ? '載入貓咪成績中…' : '目前離線，連線後再來看看', 16, '#957661');
     if (isOnline()) void getLeaderboard().then(entries => {
+      if (!this.sys.isActive()) return;
+      if (!entries.length) { loading.setText('還沒有紀錄，快來當第一名！'); return; }
+      emptyMascot.container.destroy();
       loading.destroy();
-      if (!entries.length) { label(this, W/2, 414, '還沒有分數，快來當第一名！', 16); return; }
       const list = this.add.container(0, 0);
       entries.forEach((entry, i) => {
-        const y = 211 + i * 53;
-        const bg = this.add.graphics().fillStyle(entry.isCurrentUser ? 0xd7f1d9 : i < 3 ? 0xffebbc : 0xfff9ee).fillRoundedRect(rowX, y, rowW, 45, 12);
-        const rank = label(this, rowX + 27, y + 22, `${entry.rank}`, 17, i < 3 ? '#c48644' : '#715b4d');
-        const name = label(this, rowX + rowW * .41, y + 22, entry.displayName.slice(0, 8), 16);
-        const score = label(this, rowX + rowW - 44, y + 22, format(entry.bestScore), 17, '#d9844c');
+        const y = 204 + i * 53;
+        const bg = this.add.graphics();
+        bg.fillStyle(entry.isCurrentUser ? 0xe1f2dd : i < 3 ? 0xfff0d2 : 0xfff8ea).fillRoundedRect(rowX, y, rowW, 46, 13);
+        bg.lineStyle(1.5, entry.isCurrentUser ? 0x86bd98 : 0xe5cdb1).strokeRoundedRect(rowX, y, rowW, 46, 13);
+        bg.fillStyle(i === 0 ? 0xf6c75f : i === 1 ? 0xcbd3d6 : i === 2 ? 0xe8ac83 : 0xe8d9c4).fillCircle(rowX + 26, y + 23, 15);
+        const rank = label(this, rowX + 26, y + 22, `${entry.rank}`, 15, '#654a39');
+        const name = label(this, rowX + 53, y + 22, entry.displayName.slice(0, 8), 15).setOrigin(0, .5);
+        const score = label(this, rowX + rowW - 12, y + 22, format(entry.bestScore), 16, '#c97545').setOrigin(1, .5);
         list.add([bg, rank, name, score]);
       });
-      const maskShape = this.make.graphics({ x: 0, y: 0 }); maskShape.fillRect(rowX - 8, 200, rowW + 16, 455);
+      const maskShape = this.make.graphics({ x: 0, y: 0 }); maskShape.fillRect(rowX - 8, 198, rowW + 16, 454);
       list.setMask(maskShape.createGeometryMask());
       let offset = 0;
-      this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => { offset = Phaser.Math.Clamp(offset - dy, Math.min(0, 455 - entries.length * 53), 0); list.y = offset; });
-      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => { if (pointer.isDown && pointer.y > 200 && pointer.y < 655) { offset = Phaser.Math.Clamp(offset + pointer.velocity.y * .016, Math.min(0, 455 - entries.length * 53), 0); list.y = offset; } });
+      this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => { offset = Phaser.Math.Clamp(offset - dy, Math.min(0, 454 - entries.length * 53), 0); list.y = offset; });
+      this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => { if (pointer.isDown && pointer.y > 198 && pointer.y < 652) { offset = Phaser.Math.Clamp(offset + pointer.velocity.y * .016, Math.min(0, 454 - entries.length * 53), 0); list.y = offset; } });
     }).catch(() => loading.setText('排行榜暫時無法載入，請稍後再試'));
-    panel(this, rowX, 669, rowW, 53, 0xe8f3dc, 13);
-    const mine = label(this, W/2, 695, '我的排名：尚無紀錄', 16);
-    void getMyRank().then(entry => { if (entry) mine.setText(`我的排名  #${entry.rank}     ${format(entry.bestScore)} 分`); });
-    button(this, W/2, 755, Math.min(cardW - 76, 360), 50, '返回首頁', () => this.scene.start('Menu'), 0xffe3af);
+    panel(this, rowX, 665, rowW, 57, 0xe8f3dc, 15);
+    icon(this, rowX + 26, 693, 'paw', 24);
+    const mine = label(this, W/2 + 13, 693, '我的排名：尚無紀錄', 16);
+    void getMyRank().then(entry => { if (entry && this.sys.isActive()) mine.setText(`我的排名  #${entry.rank}   ${format(entry.bestScore)} 分`); });
+    button(this, W/2, 760, Math.min(cardW - 76, 360), 49, '回到首頁', () => this.scene.start('Menu'), 0xffe3af, 'home');
   }
 }
 
@@ -426,27 +440,37 @@ class SettingsScene extends Phaser.Scene {
     street(this);
     const cardW = contentWidth(50);
     const cardX = (W - cardW) / 2;
-    panel(this, cardX, 94, cardW, 650);
-    label(this, W/2, 145, '設定', 32);
+    panel(this, cardX, 65, cardW, 725, 0xfffaf0, 29);
+    icon(this, W/2 - 95, 118, 'gear', 35);
+    label(this, W/2 + 13, 119, '貓咪小屋', 29);
+    label(this, W/2, 158, '把冒險調成喜歡的樣子', 14, '#957661');
+    label(this, cardX + 25, 194, '遊戲體驗', 15, '#8f6c55').setOrigin(0, .5);
     const settings = getSettings();
-    const rows: { key: keyof typeof settings; title: string; y: number }[] = [
-      { key: 'musicEnabled', title: '背景音樂', y: 232 }, { key: 'soundEnabled', title: '遊戲音效', y: 300 }, { key: 'vibrationEnabled', title: '震動回饋', y: 368 }
+    const rows: { key: keyof typeof settings; title: string; y: number; iconName: 'music' | 'sound' | 'vibrate'; fill: number }[] = [
+      { key: 'musicEnabled', title: '背景音樂', y: 239, iconName: 'music', fill: 0xffe8df },
+      { key: 'soundEnabled', title: '遊戲音效', y: 311, iconName: 'sound', fill: 0xffefd4 },
+      { key: 'vibrationEnabled', title: '震動回饋', y: 383, iconName: 'vibrate', fill: 0xe2f2e5 }
     ];
     for (const row of rows) {
-      label(this, cardX + 82, row.y, row.title, 18);
-      const toggle = button(this, cardX + cardW - 79, row.y, 90, 43, settings[row.key] ? '開' : '關', () => { settings[row.key] = !settings[row.key]; saveSettings(settings); this.scene.restart(); }, 0xb7dfc6);
+      panel(this, cardX + 17, row.y - 30, cardW - 34, 60, row.fill, 15);
+      icon(this, cardX + 42, row.y, row.iconName, 30);
+      label(this, cardX + 61, row.y, row.title, 17).setOrigin(0, .5);
+      const toggle = button(this, cardX + cardW - 55, row.y, 70, 44, settings[row.key] ? '開' : '關', () => { settings[row.key] = !settings[row.key]; saveSettings(settings); this.scene.restart(); }, settings[row.key] ? 0xb7dfc6 : 0xe4d7c9);
       toggle.setName(row.key);
     }
-    button(this, W/2, 449, Math.min(cardW - 70, 360), 53, '修改暱稱', () => namePrompt(() => this.scene.restart()), 0xffe3af);
-    label(this, W/2, 519, `玩家：${getProgress().displayName || '旅貓'}`, 16);
-    label(this, W/2, 550, `版本 ${VERSION}  ・  ${isOnline() ? '線上' : '離線模式'}`, 13, '#957661');
-    label(this, W/2, 592, '清除瀏覽器資料後，匿名帳號可能無法找回。', 12, '#957661');
-    button(this, W/2, 644, Math.min(cardW - 70, 360), 44, '清除本機設定', () => {
+    panel(this, cardX + 17, 430, cardW - 34, 135, 0xffefd9, 17);
+    icon(this, cardX + 44, 460, 'paw', 27);
+    label(this, cardX + 64, 460, '旅貓名片', 16).setOrigin(0, .5);
+    label(this, W/2, 497, getProgress().displayName || '旅貓', 19);
+    button(this, W/2, 537, Math.min(cardW - 92, 245), 43, '修改暱稱', () => namePrompt(() => this.scene.restart()), 0xffe3af);
+    label(this, W/2, 599, `版本 ${VERSION}  ・  ${isOnline() ? '線上漫遊' : '離線模式'}`, 13, '#957661');
+    button(this, W/2, 656, Math.min(cardW - 70, 360), 44, '清除本機資料', () => {
       if (window.confirm('確定要清除本機設定與紀錄嗎？此動作無法復原。')) {
         localStorage.removeItem('cat-dash:settings:v1'); localStorage.removeItem('cat-dash:progress:v1'); this.scene.restart();
       }
     }, 0xffded1);
-    button(this, W/2, 785, Math.min(cardW - 70, 360), 50, '返回首頁', () => this.scene.start('Menu'), 0xffe3af);
+    label(this, W/2, 696, '清除資料後，匿名帳號可能無法找回', 11, '#957661');
+    button(this, W/2, 753, Math.min(cardW - 70, 360), 49, '回到首頁', () => this.scene.start('Menu'), 0xffe3af, 'home');
   }
 }
 

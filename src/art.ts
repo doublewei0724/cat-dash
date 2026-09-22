@@ -74,8 +74,8 @@ export function icon(scene: Phaser.Scene, x: number, y: number, name: IconName, 
     g.fillRoundedRect(-11, -15, 8, 30, 3).strokeRoundedRect(-11, -15, 8, 30, 3);
     g.fillRoundedRect(3, -15, 8, 30, 3).strokeRoundedRect(3, -15, 8, 30, 3);
   } else if (name === 'replay') {
-    g.lineStyle(5, ink).beginPath().arc(0, 0, 15, Phaser.Math.DegToRad(-30), Phaser.Math.DegToRad(250)).strokePath();
-    g.fillStyle(ink).fillTriangle(15, -14, 26, -8, 12, -2);
+    g.lineStyle(4.5, ink).beginPath().arc(0, 0, 15, Phaser.Math.DegToRad(15), Phaser.Math.DegToRad(315)).strokePath();
+    g.fillStyle(ink).fillTriangle(19, -7, 5, -8, 15, -19);
   } else if (name === 'home') {
     g.lineStyle(2.5, ink).fillStyle(0xb98773);
     g.fillTriangle(-19, -2, 0, -20, 19, -2).strokeTriangle(-19, -2, 0, -20, 19, -2);

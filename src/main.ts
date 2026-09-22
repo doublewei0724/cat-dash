@@ -455,7 +455,7 @@ class SettingsScene extends Phaser.Scene {
       panel(this, cardX + 17, row.y - 30, cardW - 34, 60, row.fill, 15);
       icon(this, cardX + 42, row.y, row.iconName, 30);
       label(this, cardX + 61, row.y, row.title, 17).setOrigin(0, .5);
-      const toggle = button(this, cardX + cardW - 55, row.y, 70, 44, settings[row.key] ? '開' : '關', () => { settings[row.key] = !settings[row.key]; saveSettings(settings); this.scene.restart(); }, settings[row.key] ? 0xb7dfc6 : 0xe4d7c9);
+      const toggle = button(this, cardX + cardW - 72, row.y, 70, 44, settings[row.key] ? '開' : '關', () => { settings[row.key] = !settings[row.key]; saveSettings(settings); this.scene.restart(); }, settings[row.key] ? 0xb7dfc6 : 0xe4d7c9);
       toggle.setName(row.key);
     }
     panel(this, cardX + 17, 430, cardW - 34, 135, 0xffefd9, 17);

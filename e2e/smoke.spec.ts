@@ -60,7 +60,7 @@ test('menu tiles open the redesigned settings and leaderboard', async ({ page })
   await page.locator('canvas').click({ position: { x: 258, y: 700 } });
   await expect(page.locator('#game')).toHaveAttribute('data-scene', 'settings');
   await page.screenshot({ path: 'test-results/settings-redesign.png' });
-  await page.locator('canvas').click({ position: { x: 285, y: 239 } });
+  await page.locator('canvas').click({ position: { x: 268, y: 239 } });
   await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('cat-dash:settings:v1') || '{}').musicEnabled)).toBe(false);
   await page.locator('canvas').click({ position: { x: 195, y: 753 } });
   await expect(page.locator('#game')).toHaveAttribute('data-scene', 'menu');

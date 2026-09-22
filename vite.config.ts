@@ -15,7 +15,15 @@ export default defineConfig({
       start_url: base, scope: base,
       icons: [{ src: `${base}icons/icon-192.png`, sizes: '192x192', type: 'image/png' }, { src: `${base}icons/icon-512.png`, sizes: '512x512', type: 'image/png' }]
     },
-    workbox: { globPatterns: ['**/*.{js,css,html,svg,png}'] }
+    workbox: {
+      globPatterns: ['**/*.{js,css,svg,png}'],
+      navigateFallback: undefined,
+      runtimeCaching: [{
+        urlPattern: ({ request }) => request.mode === 'navigate',
+        handler: 'NetworkFirst',
+        options: { cacheName: 'app-shell', networkTimeoutSeconds: 3, expiration: { maxEntries: 1 } }
+      }]
+    }
   })],
   test: { environment: 'node', include: ['tests/**/*.test.ts'] }
 });

@@ -70,7 +70,20 @@ class MenuScene extends Phaser.Scene {
     label(this, headerX + headerW - 85, 94, `最高分 ${format(getProgress().localBestScore)}`, 12, '#8b6451');
     label(this, W/2, 215, '貓咪跑酷', 48, '#714d3a');
     label(this, W/2, 259, '跳跳跳，追著小魚跑！', 17, '#876b5b');
-    drawCat(this, W/2, 431, 2.25);
+    const mascot = drawCat(this, W/2, 431, 2.25);
+    this.tweens.add({ targets: mascot.container, y: 427, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: [mascot.armFront, mascot.armBack], angle: 13, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.time.addEvent({ delay: 2600, loop: true, callback: () => {
+      mascot.setExpression('blink');
+      this.time.delayedCall(180, () => mascot.setExpression('run'));
+    } });
+    mascot.container.setSize(70, 95).setInteractive({ useHandCursor: true });
+    mascot.container.on('pointerdown', (_p: unknown, _x: unknown, _y: unknown, event: Phaser.Types.Input.EventData) => {
+      event.stopPropagation();
+      mascot.setExpression('rise');
+      this.tweens.add({ targets: mascot.container, scaleX: 2.4, scaleY: 2.4, duration: 140, yoyo: true });
+      this.time.delayedCall(500, () => mascot.setExpression('run'));
+    });
     fish(this, W/2 - 107, 374).setScale(1.4).setAngle(-23);
     fish(this, W/2 + 115, 353).setScale(1.1).setAngle(25);
     const cardW = contentWidth();
@@ -100,6 +113,7 @@ class GameScene extends Phaser.Scene {
   private catY = GROUND - 27;
   private velocity = 0;
   private jumps = 0;
+  private landedAt = -1;
   private obstacleClock = 0;
   private fishClock = 0;
   private obstacles: Obstacle[] = [];
@@ -111,7 +125,7 @@ class GameScene extends Phaser.Scene {
     prepareScene(this);
     markScene('game');
     this.elapsed = this.distance = this.fishCount = this.obstacleClock = this.fishClock = 0;
-    this.catY = GROUND - 27; this.velocity = 0; this.jumps = 0; this.ended = false; this.obstacles = []; this.pickups = [];
+    this.catY = GROUND - 27; this.velocity = 0; this.jumps = 0; this.landedAt = -1; this.ended = false; this.obstacles = []; this.pickups = [];
     this.theme = 0;
     this.background = street(this, true, this.theme);
     this.cat = drawCat(this, W * .27, this.catY, 1.03);
@@ -142,6 +156,7 @@ class GameScene extends Phaser.Scene {
     if (this.ended || this.scene.isActive('Pause') || this.jumps >= PLAYER.maxJumps) return;
     this.velocity = PLAYER.jumpVelocity * (this.jumps ? .88 : 1);
     this.jumps++;
+    this.cat.setExpression('rise');
     playJump();
     vibrate(15);
     this.tweens.add({ targets: this.cat.container, angle: this.jumps === 2 ? 12 : -6, duration: 140, yoyo: true });
@@ -232,17 +247,24 @@ class GameScene extends Phaser.Scene {
     if (grounded) { this.velocity = 0; this.jumps = 0; this.cat.container.angle = 0; }
     this.cat.container.y = this.catY + Math.sin(this.elapsed * 18) * (this.jumps ? 0 : 2);
     if (grounded) {
+      if (!wasGrounded) this.landedAt = this.elapsed;
+      this.cat.setExpression(this.elapsed - this.landedAt < .2 ? 'land' : 'run');
       const cycle = this.elapsed * (16 + speed / 60);
       this.cat.legFront.angle = Math.sin(cycle) * 26;
       this.cat.legBack.angle = -Math.sin(cycle) * 26;
+      this.cat.armFront.angle = -Math.sin(cycle) * 18;
+      this.cat.armBack.angle = Math.sin(cycle) * 18;
       this.cat.tail.angle = Math.sin(this.elapsed * 5) * 9;
       if (!wasGrounded) {
         this.cat.container.setScale(this.cat.baseScale * 1.12, this.cat.baseScale * .86);
         this.tweens.add({ targets: this.cat.container, scaleX: this.cat.baseScale, scaleY: this.cat.baseScale, duration: 110, ease: 'Back.easeOut' });
       }
     } else {
+      this.cat.setExpression(this.velocity < 0 ? 'rise' : 'fall');
       this.cat.legFront.angle = Phaser.Math.Linear(this.cat.legFront.angle, -32, .3);
       this.cat.legBack.angle = Phaser.Math.Linear(this.cat.legBack.angle, 28, .3);
+      this.cat.armFront.angle = Phaser.Math.Linear(this.cat.armFront.angle, -24, .3);
+      this.cat.armBack.angle = Phaser.Math.Linear(this.cat.armBack.angle, 24, .3);
       this.cat.tail.angle = Phaser.Math.Linear(this.cat.tail.angle, -16, .2);
       const stretch = Phaser.Math.Clamp(-this.velocity / 2400, -.12, .12);
       this.cat.container.setScale(this.cat.baseScale * (1 - stretch * .6), this.cat.baseScale * (1 + stretch));

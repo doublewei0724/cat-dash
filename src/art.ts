@@ -98,47 +98,100 @@ export type CatRig = {
   baseScale: number;
   legFront: Phaser.GameObjects.Container;
   legBack: Phaser.GameObjects.Container;
+  armFront: Phaser.GameObjects.Container;
+  armBack: Phaser.GameObjects.Container;
   tail: Phaser.GameObjects.Graphics;
+  setExpression: (expression: 'run' | 'rise' | 'fall' | 'land' | 'blink') => void;
 };
 export function drawCat(scene: Phaser.Scene, x: number, y: number, scale = 1): CatRig {
   const tail = scene.add.graphics();
-  tail.lineStyle(7, 0x704c3b).beginPath().arc(0, 0, 18, 4.5, 7.2).strokePath();
-  tail.lineStyle(5, 0xe99555).beginPath().arc(0, 0, 18, 4.5, 7.2).strokePath();
-  tail.setPosition(25, 7);
+  const tailPath = (width: number, color: number): void => {
+    tail.lineStyle(width, color);
+    const points = [[22, 31], [33, 33], [45, 28], [53, 19], [55, 9], [51, 0]];
+    for (let i = 1; i < points.length; i++) tail.lineBetween(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1]);
+    tail.fillStyle(color);
+    for (const [px, py] of points) tail.fillCircle(px, py, width / 2);
+  };
+  tailPath(9, C.ink);
+  tailPath(6, 0xe9a367);
+  tail.lineStyle(1.5, 0xffd49c).lineBetween(38, 31, 47, 26);
 
   const makeLeg = (side: -1 | 1): Phaser.GameObjects.Container => {
     const g = scene.add.graphics();
-    g.lineStyle(2.5, C.ink).fillStyle(0xf4a365).fillRoundedRect(-10, 0, 20, 13, 7).strokeRoundedRect(-10, 0, 20, 13, 7);
+    g.fillStyle(0xad663d).fillRoundedRect(-10, 2, 20, 13, 7);
+    g.lineStyle(2.3, C.ink).fillStyle(0xf5ae70).fillRoundedRect(-10, 0, 20, 13, 7).strokeRoundedRect(-10, 0, 20, 13, 7);
+    g.fillStyle(0xffd9ab).fillEllipse(-3, 4, 9, 3);
     g.fillStyle(0xffe6c3).fillCircle(0, 9, 3);
     return scene.add.container(side * 14, 31, [g]);
   };
   const legBack = makeLeg(-1);
   const legFront = makeLeg(1);
 
-  const g = scene.add.graphics();
-  // A small plush-like mascot, drawn entirely with Phaser shapes (legs and tail are separate parts, animated by the game scene).
-  g.lineStyle(2.5, C.ink);
-  g.fillStyle(0xf4a365).fillRoundedRect(-25, -4, 50, 45, 20).strokeRoundedRect(-25, -4, 50, 45, 20);
-  g.fillStyle(0xffe6c3).fillEllipse(0, 17, 32, 31);
-  g.fillStyle(0xf4a365).fillTriangle(-28, -24, -22, -51, -7, -31).strokeTriangle(-28, -24, -22, -51, -7, -31);
-  g.fillTriangle(7, -31, 22, -51, 28, -24).strokeTriangle(7, -31, 22, -51, 28, -24);
-  g.fillStyle(0xffc8ad).fillTriangle(-23, -33, -20, -44, -12, -31);
-  g.fillTriangle(12, -31, 20, -44, 23, -33);
-  g.fillStyle(0xf4a365).fillEllipse(0, -18, 67, 53);
-  g.lineStyle(2.5, C.ink).strokeEllipse(0, -18, 67, 53);
-  g.fillStyle(0xffedd3).fillEllipse(0, -5, 31, 18);
-  g.fillStyle(0xe99153).fillRoundedRect(-8, -44, 16, 10, 5);
-  g.fillRoundedRect(-26, -32, 10, 5, 3).fillRoundedRect(16, -32, 10, 5, 3);
-  g.fillStyle(0x44382f).fillEllipse(-13, -22, 7, 10).fillEllipse(13, -22, 7, 10);
-  g.fillStyle(0xffffff).fillCircle(-14, -25, 2).fillCircle(12, -25, 2);
-  g.fillStyle(0xf5a6a1, .8).fillEllipse(-23, -12, 11, 6).fillEllipse(23, -12, 11, 6);
-  g.fillStyle(0xe98485).fillTriangle(-4, -13, 4, -13, 0, -8);
-  g.lineStyle(1.7, C.ink).lineBetween(0, -8, 0, -5).lineBetween(0, -5, -4, -3).lineBetween(0, -5, 4, -3);
-  g.lineStyle(1.3, 0xa86a4d).lineBetween(-27, -5, -36, -8).lineBetween(-27, -1, -35, 1);
-  g.lineBetween(27, -5, 36, -8).lineBetween(27, -1, 35, 1);
+  const makeArm = (side: -1 | 1): Phaser.GameObjects.Container => {
+    const arm = scene.add.graphics();
+    arm.lineStyle(11, C.ink).lineBetween(0, 0, side * 2, 10);
+    arm.lineStyle(7, 0xf4af76).lineBetween(0, 0, side * 2, 10);
+    arm.lineStyle(2, C.ink).fillStyle(0xffd5a4).fillEllipse(side * 2, 11, 14, 11).strokeEllipse(side * 2, 11, 14, 11);
+    arm.fillStyle(0xffeee0).fillEllipse(side * 2, 9, 6, 3);
+    return scene.add.container(side * 18, 11, [arm]);
+  };
+  const armBack = makeArm(-1);
+  const armFront = makeArm(1);
 
-  const container = scene.add.container(x, y, [tail, legBack, legFront, g]).setScale(scale);
-  return { container, baseScale: scale, legFront, legBack, tail };
+  const g = scene.add.graphics();
+  // Offset color layers give the mascot soft volume without loading raster assets.
+  g.fillStyle(0x9c5d3b).fillRoundedRect(-27, 0, 54, 44, 21);
+  g.lineStyle(2.5, C.ink).fillStyle(0xe9965a).fillRoundedRect(-27, -4, 54, 46, 20).strokeRoundedRect(-27, -4, 54, 46, 20);
+  g.fillStyle(0xffc689, .8).fillEllipse(-11, 8, 19, 29);
+  g.fillStyle(0xffe9ca).fillEllipse(0, 18, 32, 29);
+  g.fillStyle(0xffffff, .55).fillEllipse(-6, 11, 11, 7);
+  g.lineStyle(2.5, C.ink).fillStyle(0xc67a49).fillTriangle(-30, -25, -23, -52, -6, -30).strokeTriangle(-30, -25, -23, -52, -6, -30);
+  g.fillTriangle(6, -30, 23, -52, 30, -25).strokeTriangle(6, -30, 23, -52, 30, -25);
+  g.fillStyle(0xf4a7a0).fillTriangle(-24, -35, -21, -47, -12, -33).fillTriangle(12, -33, 21, -47, 24, -35);
+  g.fillStyle(0xffd4b6, .8).fillTriangle(-20, -40, -19, -44, -16, -39).fillTriangle(16, -39, 19, -44, 20, -40);
+  g.fillStyle(0xc47d4b).fillEllipse(0, -16, 62, 50);
+  g.lineStyle(2.5, C.ink).fillStyle(0xf2a768).fillEllipse(0, -19, 62, 50).strokeEllipse(0, -19, 62, 50);
+  g.fillStyle(0xffd19a, .9).fillEllipse(-12, -29, 35, 26);
+  g.fillStyle(0xffe4ba, .7).fillEllipse(-19, -22, 18, 16);
+  g.fillStyle(0xffefd6).fillEllipse(0, -6, 34, 20);
+  g.fillStyle(0xd87e4c).fillRoundedRect(-7, -44, 14, 10, 5);
+  g.fillRoundedRect(-26, -33, 9, 5, 3).fillRoundedRect(17, -33, 9, 5, 3);
+  g.fillStyle(0xf6b4a5, .8).fillEllipse(-23, -11, 12, 7).fillEllipse(23, -11, 12, 7);
+  g.lineStyle(1.4, 0xa96a52).lineBetween(-27, -5, -37, -9).lineBetween(-27, -1, -36, 1);
+  g.lineBetween(27, -5, 37, -9).lineBetween(27, -1, 36, 1);
+  // Tiny fur tufts and reflected light keep the silhouette readable on small screens.
+  g.lineStyle(1.5, 0xffd49e).lineBetween(-28, -26, -33, -29).lineBetween(28, -26, 33, -29);
+  g.fillStyle(0xffffff, .55).fillEllipse(-17, -38, 9, 3);
+
+  const face = scene.add.graphics();
+  let currentExpression = '';
+  const setExpression = (expression: 'run' | 'rise' | 'fall' | 'land' | 'blink'): void => {
+    if (currentExpression === expression) return;
+    currentExpression = expression;
+    face.clear();
+    if (expression === 'land' || expression === 'blink') {
+      face.lineStyle(2.5, C.ink).beginPath().arc(-13, -21, 4, .2, Math.PI - .2).strokePath();
+      face.beginPath().arc(13, -21, 4, .2, Math.PI - .2).strokePath();
+    } else {
+      const eyeHeight = expression === 'rise' ? 13 : expression === 'fall' ? 11 : 9;
+      face.fillStyle(0x4d362f).fillEllipse(-13, -22, 7, eyeHeight).fillEllipse(13, -22, 7, eyeHeight);
+      face.fillStyle(0xffffff).fillCircle(-14, -25, 2.2).fillCircle(12, -25, 2.2);
+      if (expression === 'rise') {
+        face.lineStyle(1.6, 0x925b43).lineBetween(-18, -33, -9, -35).lineBetween(9, -35, 18, -33);
+      }
+    }
+    face.fillStyle(0xe78182).fillTriangle(-4, -13, 4, -13, 0, -8);
+    face.lineStyle(1.6, C.ink).lineBetween(0, -8, 0, -5);
+    if (expression === 'rise' || expression === 'fall') {
+      face.fillStyle(0x793f3c).fillEllipse(0, 0, expression === 'rise' ? 8 : 6, expression === 'rise' ? 10 : 7);
+      face.fillStyle(0xffb5ae).fillEllipse(0, 3, 4, 2);
+    } else {
+      face.lineStyle(1.6, C.ink).lineBetween(0, -5, -4, -2).lineBetween(0, -5, 4, -2);
+    }
+  };
+  setExpression('run');
+  const container = scene.add.container(x, y, [tail, legBack, legFront, g, armBack, armFront, face]).setScale(scale);
+  return { container, baseScale: scale, legFront, legBack, armFront, armBack, tail, setExpression };
 }
 const THEMES = [
   { sky: 0xc8e9e3, sky2: 0xb7d6c7, sun: 0xfff5d5, glow: 0, buildingA: 0xf7d6ae, buildingB: 0xffeed1, roof: 0xb98773, window: 0xfaf4dc, grass: 0x91c9a4, grassLine: 0x719d79, road: 0xd3b195, curb: 0x7c5d4d, sidewalk: 0xf6d4ae, stars: false },

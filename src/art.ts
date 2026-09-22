@@ -130,7 +130,7 @@ export function drawCat(scene: Phaser.Scene, x: number, y: number, scale = 1): C
     arm.lineStyle(1.7, C.ink).fillStyle(0xf3ab70).fillRoundedRect(-6, 0, 12, 18, 6).strokeRoundedRect(-6, 0, 12, 18, 6);
     arm.fillStyle(0xffd7aa).fillEllipse(0, 15, 13, 9);
     arm.lineStyle(1, 0xc77e58).lineBetween(-2, 15, -2, 18).lineBetween(2, 15, 2, 18);
-    return scene.add.container(side * 17, 12, [arm]);
+    return scene.add.container(side * 23, 10, [arm]);
   };
   const armBack = makeArm(-1);
   const armFront = makeArm(1);

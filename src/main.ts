@@ -72,7 +72,6 @@ class MenuScene extends Phaser.Scene {
     label(this, W/2, 259, '跳跳跳，追著小魚跑！', 17, '#876b5b');
     const mascot = drawCat(this, W/2, 431, 2.25);
     this.tweens.add({ targets: mascot.container, y: 427, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: [mascot.armFront, mascot.armBack], angle: 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.time.addEvent({ delay: 2600, loop: true, callback: () => {
       mascot.setExpression('blink');
       this.time.delayedCall(180, () => mascot.setExpression('run'));
@@ -82,6 +81,8 @@ class MenuScene extends Phaser.Scene {
       event.stopPropagation();
       mascot.setExpression('rise');
       this.tweens.add({ targets: mascot.container, scaleX: 2.4, scaleY: 2.4, duration: 140, yoyo: true });
+      this.tweens.add({ targets: mascot.armFront, angle: -115, duration: 160, yoyo: true, hold: 220, ease: 'Sine.easeOut' });
+      this.tweens.add({ targets: mascot.armBack, angle: 115, duration: 160, yoyo: true, hold: 220, ease: 'Sine.easeOut' });
       this.time.delayedCall(500, () => mascot.setExpression('run'));
     });
     fish(this, W/2 - 107, 374).setScale(1.4).setAngle(-23);
@@ -252,8 +253,8 @@ class GameScene extends Phaser.Scene {
       const cycle = this.elapsed * (16 + speed / 60);
       this.cat.legFront.angle = Math.sin(cycle) * 26;
       this.cat.legBack.angle = -Math.sin(cycle) * 26;
-      this.cat.armFront.angle = -Math.sin(cycle) * 18;
-      this.cat.armBack.angle = Math.sin(cycle) * 18;
+      this.cat.armFront.angle = -Math.sin(cycle) * 12;
+      this.cat.armBack.angle = Math.sin(cycle) * 12;
       this.cat.tail.angle = Math.sin(this.elapsed * 5) * 9;
       if (!wasGrounded) {
         this.cat.container.setScale(this.cat.baseScale * 1.12, this.cat.baseScale * .86);
@@ -263,8 +264,9 @@ class GameScene extends Phaser.Scene {
       this.cat.setExpression(this.velocity < 0 ? 'rise' : 'fall');
       this.cat.legFront.angle = Phaser.Math.Linear(this.cat.legFront.angle, -32, .3);
       this.cat.legBack.angle = Phaser.Math.Linear(this.cat.legBack.angle, 28, .3);
-      this.cat.armFront.angle = Phaser.Math.Linear(this.cat.armFront.angle, -24, .3);
-      this.cat.armBack.angle = Phaser.Math.Linear(this.cat.armBack.angle, 24, .3);
+      const armRaise = this.velocity < 0 ? 115 : 85;
+      this.cat.armFront.angle = Phaser.Math.Linear(this.cat.armFront.angle, -armRaise, .3);
+      this.cat.armBack.angle = Phaser.Math.Linear(this.cat.armBack.angle, armRaise, .3);
       this.cat.tail.angle = Phaser.Math.Linear(this.cat.tail.angle, -16, .2);
       const stretch = Phaser.Math.Clamp(-this.velocity / 2400, -.12, .12);
       this.cat.container.setScale(this.cat.baseScale * (1 - stretch * .6), this.cat.baseScale * (1 + stretch));

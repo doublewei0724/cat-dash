@@ -96,11 +96,13 @@ export function icon(scene: Phaser.Scene, x: number, y: number, name: IconName, 
     g.lineStyle(4, ink).lineBetween(-4, 11, -4, -17).lineBetween(17, 5, 17, -22).lineBetween(-4, -17, 17, -22);
     g.lineStyle(3, 0xf6b4ac).lineBetween(-3, -16, 16, -21);
   } else if (name === 'sound') {
-    g.lineStyle(2.5, ink).fillStyle(0xffd48e).fillTriangle(-18, -8, -5, -8, 8, -19).strokeTriangle(-18, -8, -5, -8, 8, -19);
-    g.fillTriangle(-18, 8, -5, 8, 8, 19).strokeTriangle(-18, 8, -5, 8, 8, 19);
-    g.fillRect(-18, -8, 17, 16).strokeRect(-18, -8, 17, 16);
-    g.lineStyle(3, ink).beginPath().arc(5, 0, 14, -0.8, 0.8).strokePath();
-    g.beginPath().arc(5, 0, 22, -0.7, 0.7).strokePath();
+    g.lineStyle(2.7, ink).fillStyle(0xffd48e);
+    g.fillPoints([{ x: -8, y: -9 }, { x: 6, y: -18 }, { x: 6, y: 18 }, { x: -8, y: 9 }], true);
+    g.strokePoints([{ x: -8, y: -9 }, { x: 6, y: -18 }, { x: 6, y: 18 }, { x: -8, y: 9 }], true);
+    g.fillRoundedRect(-19, -10, 12, 20, 3).strokeRoundedRect(-19, -10, 12, 20, 3);
+    g.fillStyle(0xffedbc).fillEllipse(-1, -7, 5, 14);
+    g.lineStyle(2.7, ink).beginPath().arc(6, 0, 11, -0.75, 0.75).strokePath();
+    g.beginPath().arc(6, 0, 19, -0.7, 0.7).strokePath();
   } else if (name === 'vibrate') {
     g.lineStyle(2.5, ink).fillStyle(0xb7dfc6).fillRoundedRect(-12, -22, 24, 44, 6).strokeRoundedRect(-12, -22, 24, 44, 6);
     g.fillStyle(C.cream).fillRoundedRect(-8, -16, 16, 28, 3);

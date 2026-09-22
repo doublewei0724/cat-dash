@@ -253,8 +253,8 @@ class GameScene extends Phaser.Scene {
       const cycle = this.elapsed * (16 + speed / 60);
       this.cat.legFront.angle = Math.sin(cycle) * 26;
       this.cat.legBack.angle = -Math.sin(cycle) * 26;
-      this.cat.armFront.angle = -Math.sin(cycle) * 12;
-      this.cat.armBack.angle = Math.sin(cycle) * 12;
+      this.cat.armFront.angle = 35 - Math.sin(cycle) * 8;
+      this.cat.armBack.angle = -35 + Math.sin(cycle) * 8;
       this.cat.tail.angle = Math.sin(this.elapsed * 5) * 9;
       if (!wasGrounded) {
         this.cat.container.setScale(this.cat.baseScale * 1.12, this.cat.baseScale * .86);

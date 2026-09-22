@@ -134,6 +134,8 @@ export function drawCat(scene: Phaser.Scene, x: number, y: number, scale = 1): C
   };
   const armBack = makeArm(-1);
   const armFront = makeArm(1);
+  armBack.angle = -35;
+  armFront.angle = 35;
 
   const g = scene.add.graphics();
   // One clean outline per body part avoids doubled shadows at the chin and feet.

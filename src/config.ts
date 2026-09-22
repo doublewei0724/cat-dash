@@ -22,6 +22,13 @@ export function worldSpeed(seconds: number): number {
   return Math.min(520, 482 + (seconds - 90) * 0.25);
 }
 
+export function phaseFor(seconds: number): number {
+  if (seconds < 20) return 0;
+  if (seconds < 45) return 1;
+  if (seconds < 90) return 2;
+  return 3;
+}
+
 export function scoreFor(distanceM: number, fishCount: number): number {
   if (!Number.isFinite(distanceM) || !Number.isFinite(fishCount) || distanceM < 0 || fishCount < 0) throw new Error('Invalid score');
   return Math.floor(distanceM) + Math.floor(fishCount) * 10;

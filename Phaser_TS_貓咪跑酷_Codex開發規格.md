@@ -26,6 +26,55 @@
 
 ---
 
+## 0.5 目前實作狀態（2026-09-22 更新）
+
+> 本節記錄「規格文件」與「實際專案現況」的落差，方便後續接手或繼續開發時快速掌握進度，不需要重新讀完整份規格比對程式碼。
+
+### 0.5.1 已完成（核心 MVP，對應第 2.1 節與第 22 節）
+
+**核心玩法**
+- 首頁、暱稱設定（HTML overlay）、貓咪自動奔跑、點擊／觸控／鍵盤（Space、↑）跳躍、二段跳
+- 5 種障礙物（紙箱、水坑、垃圾桶／掃地機器人、疊箱子、柵欄，見下方難度分階段）
+- 小魚乾收集、距離／分數／最高分顯示、遊戲速度隨時間提升、暫停與繼續、結算畫面
+
+**Supabase 後端（已連上真實專案，非僅本地開發）**
+- 匿名登入（`signInAnonymously`）、`profiles` / `game_runs` / `player_best_scores` 三張表與 RLS
+- `submit_game_run` / `get_leaderboard` / `get_my_rank` RPC，伺服器端重新驗證分數公式
+- 全球排行榜前 100 名、個人排名顯示、離線時分數暫存本機、恢復連線後補提交
+- Migration 檔：`supabase/migrations/20260922063000_initial_schema.sql`
+
+**PWA 與部署**
+- `vite-plugin-pwa`、manifest、192/512 icon
+- GitHub Actions（`.github/workflows/deploy.yml`）自動 build 並部署到 GitHub Pages，Supabase 金鑰透過 repo secrets 注入
+- 目前排行榜是**全站共用**，任何裝置／瀏覽器都看得到同一份榜單（但用的是匿名帳號，換裝置會變成新玩家，尚無真正登入系統）
+
+**測試**
+- Vitest 單元測試（計分公式、難度曲線、localStorage 壞資料復原）
+- Playwright e2e smoke test（首頁→遊戲→暫停→結算→排行榜全流程、手機／平板響應式）
+
+### 0.5.2 規格之外，額外完成的優化項目
+
+以下是 MVP 完成後陸續加的體驗優化，規格原文沒有要求，但已經實作並通過測試：
+
+1. **音效與震動系統**（`src/audio.ts`）：用 Web Audio API 即時合成音效（跳躍、二段跳、吃魚、撞擊、按鈕），不依賴外部音檔；`navigator.vibrate()` 震動回饋；設定頁的音樂／音效／震動開關即時生效
+2. **貓咪跑步／跳躍動畫**（`src/art.ts` 的 `CatRig`）：身體拆成「軀幹、前腳、後腳、尾巴」可獨立動畫的部件，落地時前後腳交替擺動、尾巴搖擺，起跳／落地時身體有拉伸壓扁的彈性回饋
+3. **背景多層視差**：雲、大樓、地面標線三層各自以不同速度捲動，取代原本只有一層前景線在動
+4. **難度分階段場景主題**：對應原本第 6.4 節的四個時間區段（0–20s／20–45s／45–90s／90s+），背景會從白天→黃昏→傍晚（星星、亮窗）→夜晚（月亮）漸層淡入切換；同步在 20 秒與 90 秒解鎖新障礙物（疊箱子、柵欄）
+5. **全站不使用 emoji**：所有 UI 圖示（貓掌、播放、星星、齒輪、暫停、重播、首頁、慶祝星芒）改用 `icon()` 純向量繪製，取代原本的 emoji／Unicode 符號字元，避免跨平台字型顯示不一致
+
+### 0.5.3 與規格文件的已知差異
+
+- **套件管理器**：規格建議 pnpm，實際使用 npm（`package-lock.json`），功能等價
+- **專案目錄**：規格第 4 節列出的細分目錄（`game/entities`、`game/managers`、`services/` 等）並未照搬；實際採單檔精簡架構：`src/main.ts`（所有 Scene）＋`src/art.ts`（繪圖與圖示）＋`src/audio.ts`（音效）＋`src/config.ts`（參數／難度）＋`src/storage.ts`（本機存檔）＋`src/supabase.ts`（後端）。對這個專案規模而言更容易維護，但若後續功能大量增加，可考慮依規格拆分
+- **PreloadScene**：未獨立成場景，因為完全不載入外部圖片／音效素材（全部程式即時繪製／合成），沒有素材載入進度可顯示，相關邏輯併入 `BootScene`
+- **美術風格**：目前仍是純 Phaser Graphics 向量繪圖（無 PNG/sprite sheet），符合規格「placeholder 原則」但尚未替換成正式美術
+
+### 0.5.4 尚未做（對應第 2.2 節「暫時不做」與第 21 節「後續版本」）
+
+真正登入系統（Email／Google／Apple 綁定，解決匿名帳號換裝置斷連問題）、每日任務、combo 系統、護盾／磁鐵等道具、更多貓咪造型、每週榜／好友榜、成就系統、廣告與商店——皆維持規格原訂「第一版不做」，尚未排入開發。
+
+---
+
 ## 1. 遊戲概要
 
 ### 1.1 暫定名稱
@@ -1294,20 +1343,20 @@ README 必須寫出至少一種完整部署方法與環境變數設定方式。
 
 Codex 完成後應交付：
 
-- [ ] 可執行的完整原始碼
-- [ ] Phaser 遊戲場景
-- [ ] Placeholder 素材
-- [ ] Supabase Client 整合
-- [ ] SQL migration
-- [ ] RLS 與排行榜 RPC
-- [ ] 本機離線存檔
-- [ ] PWA 設定
-- [ ] 單元測試
-- [ ] E2E smoke test
-- [ ] README
-- [ ] `.env.example`
-- [ ] 成功的 production build
-- [ ] 已知限制與後續建議
+- [x] 可執行的完整原始碼
+- [x] Phaser 遊戲場景
+- [x] Placeholder 素材（純向量繪圖，見 0.5.3）
+- [x] Supabase Client 整合
+- [x] SQL migration
+- [x] RLS 與排行榜 RPC
+- [x] 本機離線存檔
+- [x] PWA 設定
+- [x] 單元測試
+- [x] E2E smoke test
+- [x] README
+- [x] `.env.example`
+- [x] 成功的 production build（GitHub Actions 自動部署至 GitHub Pages）
+- [x] 已知限制與後續建議（見 0.5.3、0.5.4）
 
 完成時，請在最終回覆中列出：
 

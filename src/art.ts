@@ -13,7 +13,7 @@ export function panel(scene: Phaser.Scene, x: number, y: number, width: number, 
   g.lineStyle(2, C.ink, .9).strokeRoundedRect(x, y, width, height, radius);
   return g;
 }
-export function button(scene: Phaser.Scene, x: number, y: number, width: number, height: number, value: string, action: () => void, fill = C.orange): Phaser.GameObjects.Container {
+export function button(scene: Phaser.Scene, x: number, y: number, width: number, height: number, value: string, action: () => void, fill = C.orange, iconName?: IconName): Phaser.GameObjects.Container {
   const cssScale = document.querySelector('#game')!.clientHeight / H;
   width = Math.max(width, 44 / cssScale);
   height = Math.max(height, 44 / cssScale);
@@ -22,11 +22,76 @@ export function button(scene: Phaser.Scene, x: number, y: number, width: number,
   g.fillStyle(fill).fillRoundedRect(-width/2, -height/2, width, height, 16);
   g.lineStyle(2, C.ink).strokeRoundedRect(-width/2, -height/2, width, height, 16);
   const t = label(scene, 0, -2, value, 19);
-  const c = scene.add.container(x, y, [g, t]).setSize(width, height).setInteractive({ useHandCursor: true });
+  const children: Phaser.GameObjects.GameObject[] = [g, t];
+  if (iconName) {
+    const iconSize = Math.min(height - 14, 30);
+    const ic = icon(scene, 0, -2, iconName, iconSize);
+    const gap = value ? 10 : 0;
+    const totalW = t.width + gap + iconSize;
+    t.x = value ? -totalW / 2 + t.width / 2 : 0;
+    ic.x = value ? totalW / 2 - iconSize / 2 : 0;
+    children.push(ic);
+  }
+  const c = scene.add.container(x, y, children).setSize(width, height).setInteractive({ useHandCursor: true });
   c.on('pointerdown', (_p: unknown, _x: unknown, _y: unknown, event: Phaser.Types.Input.EventData) => { event.stopPropagation(); playClick(); action(); });
   c.on('pointerover', () => scene.tweens.add({ targets: c, scale: 1.035, duration: 120 }));
   c.on('pointerout', () => scene.tweens.add({ targets: c, scale: 1, duration: 120 }));
   return c;
+}
+export type IconName = 'paw' | 'play' | 'star' | 'gear' | 'pause' | 'replay' | 'home' | 'sparkle';
+export function icon(scene: Phaser.Scene, x: number, y: number, name: IconName, size = 50): Phaser.GameObjects.Container {
+  const g = scene.add.graphics();
+  const ink = C.ink;
+  if (name === 'paw') {
+    g.lineStyle(2, ink).fillStyle(C.orange);
+    g.fillEllipse(0, 8, 26, 19).strokeEllipse(0, 8, 26, 19);
+    for (const [px, py] of [[-12, -9], [-4, -16], [5, -16], [13, -9]] as const) g.fillCircle(px, py, 6.4).strokeCircle(px, py, 6.4);
+  } else if (name === 'play') {
+    g.lineStyle(2.5, ink).fillStyle(C.cream);
+    g.fillTriangle(-10, -15, -10, 15, 16, 0).strokeTriangle(-10, -15, -10, 15, 16, 0);
+  } else if (name === 'star') {
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? 22 : 9;
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      points.push({ x: Math.cos(a) * r, y: Math.sin(a) * r });
+    }
+    g.fillStyle(0xf7c965).fillPoints(points, true);
+    g.lineStyle(2, ink).strokePoints(points, true);
+    g.fillStyle(0xffffff, .85).fillCircle(7, -10, 2.6);
+  } else if (name === 'gear') {
+    g.lineStyle(2, ink).fillStyle(C.mint);
+    for (let i = 0; i < 6; i++) {
+      g.save();
+      g.rotateCanvas(i * Math.PI / 3);
+      g.fillRoundedRect(-5, -21, 10, 10, 3).strokeRoundedRect(-5, -21, 10, 10, 3);
+      g.restore();
+    }
+    g.fillStyle(C.mint).fillCircle(0, 0, 15).strokeCircle(0, 0, 15);
+    g.fillStyle(C.cream).fillCircle(0, 0, 6).strokeCircle(0, 0, 6);
+  } else if (name === 'pause') {
+    g.lineStyle(2, ink).fillStyle(ink, .85);
+    g.fillRoundedRect(-11, -15, 8, 30, 3).strokeRoundedRect(-11, -15, 8, 30, 3);
+    g.fillRoundedRect(3, -15, 8, 30, 3).strokeRoundedRect(3, -15, 8, 30, 3);
+  } else if (name === 'replay') {
+    g.lineStyle(5, ink).beginPath().arc(0, 0, 15, Phaser.Math.DegToRad(-30), Phaser.Math.DegToRad(250)).strokePath();
+    g.fillStyle(ink).fillTriangle(15, -14, 26, -8, 12, -2);
+  } else if (name === 'home') {
+    g.lineStyle(2.5, ink).fillStyle(0xb98773);
+    g.fillTriangle(-19, -2, 0, -20, 19, -2).strokeTriangle(-19, -2, 0, -20, 19, -2);
+    g.fillStyle(C.orange).fillRoundedRect(-14, -3, 28, 20, 3).strokeRoundedRect(-14, -3, 28, 20, 3);
+    g.fillStyle(C.cream).fillRoundedRect(-5, 5, 10, 12, 2).strokeRoundedRect(-5, 5, 10, 12, 2);
+  } else if (name === 'sparkle') {
+    const spark = (cx: number, cy: number, r: number, color: number): void => {
+      g.fillStyle(color);
+      g.fillTriangle(cx, cy - r, cx - r * .28, cy, cx, cy + r).fillTriangle(cx, cy - r, cx + r * .28, cy, cx, cy + r);
+      g.fillTriangle(cx - r, cy, cx, cy - r * .28, cx + r, cy).fillTriangle(cx - r, cy, cx, cy + r * .28, cx + r, cy);
+    };
+    spark(0, -2, 17, 0xf7c965);
+    spark(-16, 10, 7, 0xf5a6a1);
+    spark(15, 12, 6, 0xa9d8c0);
+  }
+  return scene.add.container(x, y, [g]).setScale(size / 50);
 }
 export type CatRig = {
   container: Phaser.GameObjects.Container;
@@ -75,20 +140,34 @@ export function drawCat(scene: Phaser.Scene, x: number, y: number, scale = 1): C
   const container = scene.add.container(x, y, [tail, legBack, legFront, g]).setScale(scale);
   return { container, baseScale: scale, legFront, legBack, tail };
 }
-export function street(scene: Phaser.Scene, moving = false): Phaser.GameObjects.Container {
-  const sky = scene.add.graphics().fillStyle(C.sky).fillRect(0, 0, W, H);
-  sky.fillStyle(0xb7d6c7).fillRect(0, 460, W, 120);
-  sky.fillStyle(0x91c9a4).fillRect(0, 538, W, 52);
-  sky.fillStyle(0x719d79).fillRect(0, 585, W, 12);
-  sky.fillStyle(0xd3b195).fillRect(0, 597, W, GROUND - 597);
-  sky.fillStyle(0x7c5d4d).fillRect(0, GROUND, W, 8);
-  sky.fillStyle(0xf6d4ae).fillRect(0, GROUND + 8, W, H - GROUND);
+const THEMES = [
+  { sky: 0xc8e9e3, sky2: 0xb7d6c7, sun: 0xfff5d5, glow: 0, buildingA: 0xf7d6ae, buildingB: 0xffeed1, roof: 0xb98773, window: 0xfaf4dc, grass: 0x91c9a4, grassLine: 0x719d79, road: 0xd3b195, curb: 0x7c5d4d, sidewalk: 0xf6d4ae, stars: false },
+  { sky: 0xf6cd9e, sky2: 0xe7ab8c, sun: 0xffb37a, glow: .25, buildingA: 0xe8a97e, buildingB: 0xf4c99a, roof: 0x8f5b45, window: 0xffdf9c, grass: 0x83b98a, grassLine: 0x5f8c68, road: 0xb98f78, curb: 0x5f4535, sidewalk: 0xe0b48c, stars: false },
+  { sky: 0x8a7bab, sky2: 0x6f5f8a, sun: 0xffe7b3, glow: .35, buildingA: 0x6f5f86, buildingB: 0x83729a, roof: 0x4a3d5c, window: 0xffe27a, grass: 0x557a63, grassLine: 0x3c5a48, road: 0x6f5c62, curb: 0x362a30, sidewalk: 0x8a7275, stars: true },
+  { sky: 0x24243f, sky2: 0x1a1a30, sun: 0xf5f3e7, glow: .45, buildingA: 0x2c2a45, buildingB: 0x373458, roof: 0x1c1a30, window: 0xffe27a, grass: 0x2e4a3c, grassLine: 0x203528, road: 0x3a3444, curb: 0x1a1622, sidewalk: 0x453f52, stars: true }
+] as const;
 
-  const sun = scene.add.graphics().fillStyle(0xfff5d5).fillCircle(W - 72, 168, 56);
+export function street(scene: Phaser.Scene, moving = false, themeIndex = 0): Phaser.GameObjects.Container {
+  const t = THEMES[Phaser.Math.Clamp(themeIndex, 0, THEMES.length - 1)];
+  const sky = scene.add.graphics().fillStyle(t.sky).fillRect(0, 0, W, H);
+  sky.fillStyle(t.sky2).fillRect(0, 460, W, 120);
+  sky.fillStyle(t.grass).fillRect(0, 538, W, 52);
+  sky.fillStyle(t.grassLine).fillRect(0, 585, W, 12);
+  sky.fillStyle(t.road).fillRect(0, 597, W, GROUND - 597);
+  sky.fillStyle(t.curb).fillRect(0, GROUND, W, 8);
+  sky.fillStyle(t.sidewalk).fillRect(0, GROUND + 8, W, H - GROUND);
+
+  const sun = scene.add.graphics();
+  if (t.glow) sun.fillStyle(t.sun, t.glow).fillCircle(W - 72, 168, 84);
+  sun.fillStyle(t.sun).fillCircle(W - 72, 168, 56);
+  if (t.stars) {
+    const rand = new Phaser.Math.RandomDataGenerator([`stars-${themeIndex}`]);
+    for (let i = 0; i < 26; i++) sun.fillStyle(0xffffff, rand.realInRange(.4, .9)).fillCircle(rand.between(0, W), rand.between(20, 340), rand.realInRange(1, 2));
+  }
 
   const clouds = scene.add.graphics();
   const drawClouds = (ox: number): void => {
-    clouds.fillStyle(0xffffff, .8).fillEllipse(ox + 73, 137, 115, 32).fillEllipse(ox + W * .62, 223, 82, 24);
+    clouds.fillStyle(0xffffff, t.stars ? .18 : .8).fillEllipse(ox + 73, 137, 115, 32).fillEllipse(ox + W * .62, 223, 82, 24);
   };
   drawClouds(0); drawClouds(W);
 
@@ -96,9 +175,9 @@ export function street(scene: Phaser.Scene, moving = false): Phaser.GameObjects.
   const drawBuildings = (ox: number): void => {
     for (let i = 0; i < Math.ceil(W / 100) + 1; i++) {
       const bx = ox + i * 100 - 25;
-      buildings.fillStyle(i % 2 ? 0xf7d6ae : 0xffeed1).fillRect(bx, 366 + (i % 2) * 35, 80, 190);
-      buildings.fillStyle(0xb98773).fillTriangle(bx - 8, 367 + (i % 2) * 35, bx + 40, 330 + (i % 2) * 35, bx + 88, 367 + (i % 2) * 35);
-      buildings.fillStyle(0xfaf4dc).fillRoundedRect(bx + 21, 410 + (i % 2) * 35, 22, 32, 5);
+      buildings.fillStyle(i % 2 ? t.buildingA : t.buildingB).fillRect(bx, 366 + (i % 2) * 35, 80, 190);
+      buildings.fillStyle(t.roof).fillTriangle(bx - 8, 367 + (i % 2) * 35, bx + 40, 330 + (i % 2) * 35, bx + 88, 367 + (i % 2) * 35);
+      buildings.fillStyle(t.window).fillRoundedRect(bx + 21, 410 + (i % 2) * 35, 22, 32, 5);
     }
   };
   drawBuildings(0); drawBuildings(W);

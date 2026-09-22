@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { playFish, playHit, playJump, startMusic, unlockAudio, vibrate } from './audio';
-import { button, type CatRig, drawCat, fish, label, panel, street } from './art';
-import { contentWidth, format, GROUND, H, PLAYER, RENDER_SCALE, scoreFor, setViewport, VERSION, W, worldSpeed } from './config';
+import { button, type CatRig, drawCat, fish, icon, label, panel, street } from './art';
+import { contentWidth, format, GROUND, H, phaseFor, PLAYER, RENDER_SCALE, scoreFor, setViewport, VERSION, W, worldSpeed } from './config';
 import { getProgress, getSettings, saveProgress, saveSettings, storeRun } from './storage';
 import { ensureProfile, getLeaderboard, getMyRank, getOrCreateSession, isOnline, submitRun, updateName, type RunResult } from './supabase';
 import './style.css';
@@ -61,8 +61,10 @@ class MenuScene extends Phaser.Scene {
     const headerW = contentWidth(46);
     const headerX = (W - headerW) / 2;
     panel(this, headerX, 40, headerW, 78, 0xfffbf1, 21);
-    label(this, headerX + 79, 69, '🐾  CAT DASH', 16, '#8b6451');
-    label(this, headerX + 81, 95, isOnline() ? '● 線上漫遊中' : '● 離線模式', 12, isOnline() ? '#579b78' : '#bd8666');
+    icon(this, headerX + 30, 69, 'paw', 22);
+    label(this, headerX + 100, 69, 'CAT DASH', 16, '#8b6451');
+    this.add.circle(headerX + 35, 95, 3.5, isOnline() ? 0x579b78 : 0xbd8666);
+    label(this, headerX + 100, 95, isOnline() ? '線上漫遊中' : '離線模式', 12, isOnline() ? '#579b78' : '#bd8666');
     const name = getProgress().displayName || '新來的小旅貓';
     label(this, headerX + headerW - 85, 68, name, 16);
     label(this, headerX + headerW - 85, 94, `最高分 ${format(getProgress().localBestScore)}`, 12, '#8b6451');
@@ -74,9 +76,9 @@ class MenuScene extends Phaser.Scene {
     const cardW = contentWidth();
     const buttonW = Math.min(cardW - 60, 360);
     panel(this, (W - cardW)/2, 554, cardW, 251, 0xfffaf0, 28);
-    button(this, W/2, 609, buttonW, 58, '開始遊戲  ▶', () => this.scene.start('Game'));
-    button(this, W/2, 680, buttonW, 55, '排行榜  ★', () => this.scene.start('Leaderboard'), 0xb7dfc6);
-    button(this, W/2, 749, buttonW, 55, '設定  ⚙', () => this.scene.start('Settings'), 0xffe3af);
+    button(this, W/2, 609, buttonW, 58, '開始遊戲', () => this.scene.start('Game'), undefined, 'play');
+    button(this, W/2, 680, buttonW, 55, '排行榜', () => this.scene.start('Leaderboard'), 0xb7dfc6, 'star');
+    button(this, W/2, 749, buttonW, 55, '設定', () => this.scene.start('Settings'), 0xffe3af, 'gear');
     if (!getProgress().displayName) this.time.delayedCall(200, () => namePrompt(() => this.scene.restart()));
   }
 }
@@ -103,13 +105,15 @@ class GameScene extends Phaser.Scene {
   private obstacles: Obstacle[] = [];
   private pickups: Pickup[] = [];
   private ended = false;
+  private theme = 0;
   constructor() { super('Game'); }
   create(): void {
     prepareScene(this);
     markScene('game');
     this.elapsed = this.distance = this.fishCount = this.obstacleClock = this.fishClock = 0;
     this.catY = GROUND - 27; this.velocity = 0; this.jumps = 0; this.ended = false; this.obstacles = []; this.pickups = [];
-    this.background = street(this, true);
+    this.theme = 0;
+    this.background = street(this, true, this.theme);
     this.cat = drawCat(this, W * .27, this.catY, 1.03);
     const hudW = contentWidth(32);
     const hudX = (W - hudW) / 2;
@@ -124,7 +128,7 @@ class GameScene extends Phaser.Scene {
     this.fishText = label(this, hudX + column * 1.5, 91, '0', 21);
     this.scoreText = label(this, hudX + column * 2.5, 91, '0', 21);
     this.hudElements.push(this.distanceText, this.fishText, this.scoreText);
-    this.hudElements.push(button(this, hudX + hudW - 27, 157, 51, 48, 'Ⅱ', () => this.pause(), 0xfff0d2));
+    this.hudElements.push(button(this, hudX + hudW - 27, 157, 51, 48, '', () => this.pause(), 0xfff0d2, 'pause'));
     this.hint = label(this, W/2, 787, '點擊畫面或按空白鍵跳躍・可二段跳', 14, '#876b5b');
     this.input.on('pointerdown', () => this.jump());
     this.input.keyboard?.on('keydown-SPACE', () => this.jump());
@@ -155,12 +159,26 @@ class GameScene extends Phaser.Scene {
     this.cat.container.x = W * .27;
     this.tweens.killTweensOf(this.background.getData('parallax') as Phaser.GameObjects.GameObject[]);
     this.background.destroy();
-    this.background = street(this, true);
+    this.background = street(this, true, this.theme);
     this.children.sendToBack(this.background);
   }
+  private swapTheme(next: number): void {
+    this.theme = next;
+    const oldBg = this.background;
+    const newBg = street(this, true, next);
+    newBg.setAlpha(0);
+    this.children.moveBelow(newBg, this.cat.container);
+    this.tweens.add({ targets: newBg, alpha: 1, duration: 900, onComplete: () => {
+      this.tweens.killTweensOf(oldBg.getData('parallax') as Phaser.GameObjects.GameObject[]);
+      oldBg.destroy();
+    } });
+    this.background = newBg;
+  }
   private spawnObstacle(): void {
-    const kind = Phaser.Math.Between(0, 2);
-    const width = [43, 68, 51][kind], height = [54, 17, 32][kind];
+    const phase = phaseFor(this.elapsed);
+    const kinds = phase >= 3 ? [0, 1, 2, 3, 4] : phase >= 1 ? [0, 1, 2, 3] : [0, 1, 2];
+    const kind = kinds[Phaser.Math.Between(0, kinds.length - 1)];
+    const width = [43, 68, 51, 46, 90][kind], height = [54, 17, 32, 74, 40][kind];
     const x = W + 35;
     const graphics = this.add.graphics();
     if (kind === 0) {
@@ -172,11 +190,20 @@ class GameScene extends Phaser.Scene {
       graphics.fillStyle(0x6199a7).fillEllipse(0, -5, width, 15);
       graphics.lineStyle(3, 0x476e77).strokeEllipse(0, -5, width, 15);
       graphics.fillStyle(0xd7f3eb).fillCircle(-14, -7, 3).fillCircle(10, -6, 2);
-    } else {
+    } else if (kind === 2) {
       graphics.fillStyle(0x9daeb4).fillRoundedRect(-width/2, -height, width, height, 12);
       graphics.lineStyle(3, 0x4a626b).strokeRoundedRect(-width/2, -height, width, height, 12);
       graphics.fillStyle(0x49565b).fillCircle(-10, -17, 3).fillCircle(10, -17, 3);
       graphics.fillStyle(0xeb9a7d).fillCircle(0, -8, 3);
+    } else if (kind === 3) {
+      graphics.fillStyle(0xc99a70).fillRoundedRect(-width/2, -34, width, 34, 4).strokeRoundedRect(-width/2, -34, width, 34, 4);
+      graphics.lineStyle(3, 0x654b3f).fillStyle(0xd9ad84).fillRoundedRect(-width/2 + 3, -height, width - 6, 34, 4).strokeRoundedRect(-width/2 + 3, -height, width - 6, 34, 4);
+      graphics.lineStyle(2, 0xa77452).lineBetween(-width/2, -17, width/2, -17).lineBetween(-width/2 + 3, -height + 17, width/2 - 3, -height + 17);
+    } else {
+      graphics.fillStyle(0xc2a385).fillRect(-width/2, -height, 8, height).fillRect(width/2 - 8, -height, 8, height);
+      graphics.lineStyle(3, 0x6b543f).strokeRect(-width/2, -height, 8, height).strokeRect(width/2 - 8, -height, 8, height);
+      graphics.fillStyle(0xd9b58f).fillRect(-width/2, -height + 6, width, 8).fillRect(-width/2, -height + 22, width, 8);
+      graphics.lineStyle(2, 0x6b543f).strokeRect(-width/2, -height + 6, width, 8).strokeRect(-width/2, -height + 22, width, 8);
     }
     const view = this.add.container(x, GROUND, [graphics]);
     this.obstacles.push({ x, width, height, kind, view, active: true });
@@ -195,6 +222,8 @@ class GameScene extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000;
     this.elapsed += dt;
     const speed = worldSpeed(this.elapsed);
+    const phase = phaseFor(this.elapsed);
+    if (phase !== this.theme) this.swapTheme(phase);
     this.distance += speed * dt / 16;
     this.velocity += PLAYER.gravityY * dt;
     const wasGrounded = this.catY >= GROUND - 27;
@@ -266,9 +295,9 @@ class PauseScene extends Phaser.Scene {
     panel(this, (W - cardW)/2, 220, cardW, 400);
     label(this, W/2, 275, '休息一下', 32);
     label(this, W/2, 314, '貓咪等你回來！', 16, '#957661');
-    button(this, W/2, 378, buttonW, 54, '繼續跑  ▶', () => { this.scene.stop(); this.scene.resume('Game'); markScene('game'); });
-    button(this, W/2, 445, buttonW, 54, '重新開始  ↺', () => { this.scene.stop('Game'); this.scene.stop(); this.scene.start('Game'); }, 0xb7dfc6);
-    button(this, W/2, 512, buttonW, 54, '回首頁  ⌂', () => { this.scene.stop('Game'); this.scene.stop(); this.scene.start('Menu'); }, 0xffe3af);
+    button(this, W/2, 378, buttonW, 54, '繼續跑', () => { this.scene.stop(); this.scene.resume('Game'); markScene('game'); }, undefined, 'play');
+    button(this, W/2, 445, buttonW, 54, '重新開始', () => { this.scene.stop('Game'); this.scene.stop(); this.scene.start('Game'); }, 0xb7dfc6, 'replay');
+    button(this, W/2, 512, buttonW, 54, '回首頁', () => { this.scene.stop('Game'); this.scene.stop(); this.scene.start('Menu'); }, 0xffe3af, 'home');
     this.input.keyboard?.once('keydown-ESC', () => { this.scene.stop(); this.scene.resume('Game'); markScene('game'); });
   }
 }
@@ -287,7 +316,12 @@ class GameOverScene extends Phaser.Scene {
     const pairW = Math.min((cardW - 80)/2, 180);
     const pairOffset = pairW / 2 + 11;
     panel(this, (W - cardW)/2, 115, cardW, 615);
-    label(this, W/2, 170, isBest ? '🎉  新紀錄！' : '跑得真棒！', 31);
+    if (isBest) {
+      const record = label(this, W/2 + 13, 170, '新紀錄！', 31);
+      icon(this, record.x - record.width / 2 - 22, 170, 'sparkle', 34);
+    } else {
+      label(this, W/2, 170, '跑得真棒！', 31);
+    }
     drawCat(this, W/2, 296, 1.4);
     label(this, W/2, 398, format(this.run.score), 52, '#d9854c');
     label(this, W/2, 443, '本局分數', 16, '#987a67');
@@ -301,7 +335,7 @@ class GameOverScene extends Phaser.Scene {
         const rank = await getMyRank(); status.setText(rank ? `已提交・目前第 ${rank.rank} 名` : '已提交排行榜');
       } else status.setText('分數已暫存，連線後可重新提交');
     })();
-    button(this, W/2, 594, Math.min(cardW - 64, 360), 53, '再玩一次  ▶', () => this.scene.start('Game'));
+    button(this, W/2, 594, Math.min(cardW - 64, 360), 53, '再玩一次', () => this.scene.start('Game'), undefined, 'play');
     button(this, W/2 - pairOffset, 660, pairW, 50, '排行榜', () => this.scene.start('Leaderboard'), 0xb7dfc6);
     button(this, W/2 + pairOffset, 660, pairW, 50, '回首頁', () => this.scene.start('Menu'), 0xffe3af);
   }
@@ -330,7 +364,8 @@ class LeaderboardScene extends Phaser.Scene {
     const rowX = cardX + 20;
     const rowW = cardW - 40;
     panel(this, cardX, 35, cardW, 767);
-    label(this, W/2, 87, '★  全球排行榜', 30);
+    const title = label(this, W/2 + 15, 87, '全球排行榜', 30);
+    icon(this, title.x - title.width / 2 - 24, 87, 'star', 30);
     label(this, W/2, 122, '最會跑的貓咪都在這裡', 14, '#957661');
     button(this, cardX + cardW - 53, 170, 76, 41, '更新', () => this.scene.restart(), 0xb7dfc6);
     const loading = label(this, W/2, 414, isOnline() ? '載入排行榜中…' : '離線模式，暫時無法載入排行榜', 16, '#957661');

@@ -38,6 +38,7 @@ class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
   create(): void {
     prepareScene(this);
+    markScene('boot');
     this.cameras.main.setBackgroundColor('#fff7e8');
     label(this, W/2, H/2, '貓咪正在準備出發…', 20);
     void getOrCreateSession().then(async online => {
@@ -475,24 +476,16 @@ class SettingsScene extends Phaser.Scene {
 }
 
 const gameElement = document.querySelector<HTMLDivElement>('#game')!;
-setViewport(gameElement.clientWidth, gameElement.clientHeight);
+setViewport(gameElement.clientWidth || window.innerWidth, gameElement.clientHeight || window.innerHeight);
 
 const game = new Phaser.Game({
-  type: Phaser.AUTO,
+  type: Phaser.CANVAS,
   parent: 'game',
   width: W * RENDER_SCALE, height: H * RENDER_SCALE,
   backgroundColor: '#fff7e8',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [BootScene, MenuScene, GameScene, PauseScene, GameOverScene, LeaderboardScene, SettingsScene]
 });
-const watchContextLoss = (): void => {
-  game.canvas.addEventListener('webglcontextlost', () => {
-    (window as Window & { catDashShowRecovery?: () => void }).catDashShowRecovery?.();
-  });
-};
-if (game.isBooted) watchContextLoss();
-else game.events.once(Phaser.Core.Events.READY, watchContextLoss);
-
 const unlockOnce = (): void => { unlockAudio(); startMusic(); document.removeEventListener('pointerdown', unlockOnce); document.removeEventListener('keydown', unlockOnce); };
 document.addEventListener('pointerdown', unlockOnce);
 document.addEventListener('keydown', unlockOnce);

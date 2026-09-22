@@ -6,9 +6,10 @@ export let RENDER_SCALE = 1;
 export const PLAYER = { gravityY: 1800, jumpVelocity: -680, maxJumps: 2 } as const;
 
 export function setViewport(width: number, height: number): void {
-  W = Math.round(width * H / Math.max(height, 1));
+  if (width <= 0 || height <= 0) return;
+  W = Math.round(width * H / height);
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
-  RENDER_SCALE = Math.min(4, dpr * height / H);
+  RENDER_SCALE = Math.min(3, dpr * height / H);
 }
 
 export function contentWidth(gutter = 44, max = 500): number {

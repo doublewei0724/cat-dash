@@ -6,8 +6,7 @@ const base = process.env.VITE_BASE_PATH || '/';
 export default defineConfig({
   base,
   plugins: [VitePWA({
-    registerType: 'prompt',
-    injectRegister: false,
+    registerType: 'autoUpdate',
     includeAssets: ['favicon.svg'],
     manifest: {
       name: '貓咪跑酷 Cat Dash', short_name: 'Cat Dash',

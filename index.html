@@ -23,7 +23,7 @@
           box.setAttribute('role', 'alert');
           const card = document.createElement('div');
           card.className = 'boot-recovery-card';
-          card.innerHTML = '<h2>貓咪暫時迷路了</h2><p>更新時有檔案沒有載入。修復只會重建遊戲快取，不會清除暱稱和成績。</p>';
+          card.innerHTML = '<h2>貓咪暫時迷路了</h2><p>遊戲畫面沒有正常載入。重新開啟會重建遊戲快取，不會清除暱稱和成績。</p>';
           const button = document.createElement('button');
           button.type = 'button';
           button.textContent = '修復並重新開啟';
@@ -60,7 +60,7 @@
         }, true);
         window.setTimeout(() => {
           const canvas = document.querySelector('#game canvas');
-          if (!canvas || canvas.getBoundingClientRect().width < 10) showRecovery('canvas');
+          if (!canvas || canvas.getBoundingClientRect().width < 10 || !document.querySelector('#game[data-scene]')) showRecovery('canvas');
         }, 10000);
       })();
     </script>

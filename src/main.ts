@@ -485,6 +485,13 @@ const game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [BootScene, MenuScene, GameScene, PauseScene, GameOverScene, LeaderboardScene, SettingsScene]
 });
+const watchContextLoss = (): void => {
+  game.canvas.addEventListener('webglcontextlost', () => {
+    (window as Window & { catDashShowRecovery?: () => void }).catDashShowRecovery?.();
+  });
+};
+if (game.isBooted) watchContextLoss();
+else game.events.once(Phaser.Core.Events.READY, watchContextLoss);
 
 const unlockOnce = (): void => { unlockAudio(); startMusic(); document.removeEventListener('pointerdown', unlockOnce); document.removeEventListener('keydown', unlockOnce); };
 document.addEventListener('pointerdown', unlockOnce);

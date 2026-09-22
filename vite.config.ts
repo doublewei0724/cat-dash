@@ -7,6 +7,7 @@ export default defineConfig({
   base,
   plugins: [VitePWA({
     registerType: 'prompt',
+    injectRegister: false,
     includeAssets: ['favicon.svg'],
     manifest: {
       name: '貓咪跑酷 Cat Dash', short_name: 'Cat Dash',

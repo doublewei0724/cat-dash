@@ -5,6 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f6aa69" />
     <meta name="description" content="和小橘貓一起跳過障礙、收集小魚乾！" />
+    <style>
+      .boot-recovery{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:#d5f1ec;color:#594238;font-family:system-ui,sans-serif}
+      .boot-recovery-card{width:min(360px,100%);padding:26px;border:2px solid #594238;border-radius:24px;background:#fff9eb;text-align:center;box-shadow:0 8px 0 #59423833}
+      .boot-recovery-card h2{margin:0 0 10px;font-size:23px}.boot-recovery-card p{line-height:1.6}.boot-recovery-card button{width:100%;padding:13px;border:2px solid #594238;border-radius:14px;background:#f4a660;color:#594238;font:800 16px system-ui,sans-serif}
+    </style>
+    <script>
+      (() => {
+        let shown = false;
+        const showRecovery = (reason = 'unknown') => {
+          if (shown) return;
+          if (!document.body) { document.addEventListener('DOMContentLoaded', () => showRecovery(reason), { once: true }); return; }
+          shown = true;
+          window.catDashRecoveryReason = reason;
+          const box = document.createElement('div');
+          box.className = 'boot-recovery';
+          box.setAttribute('role', 'alert');
+          const card = document.createElement('div');
+          card.className = 'boot-recovery-card';
+          card.innerHTML = '<h2>貓咪暫時迷路了</h2><p>更新時有檔案沒有載入。修復只會重建遊戲快取，不會清除暱稱和成績。</p>';
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = '修復並重新開啟';
+          button.addEventListener('pointerdown', event => event.stopPropagation());
+          button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.textContent = '正在修復…';
+            const base = new URL('./', location.href);
+            try {
+              const check = await fetch(new URL('sw.js?check=' + Date.now(), base), { cache: 'no-store' });
+              if (!check.ok) throw new Error('offline');
+              if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.filter(item => item.scope === base.href).map(item => item.unregister()));
+              }
+              if ('caches' in window) {
+                const names = await caches.keys();
+                await Promise.all(names.filter(name => name === 'app-shell' || name.includes(base.href)).map(name => caches.delete(name)));
+              }
+              location.replace(base.href + '?repair=' + Date.now().toString(36));
+            } catch {
+              button.disabled = false;
+              button.textContent = '請連上網路後重試';
+            }
+          });
+          card.append(button);
+          box.append(card);
+          document.body.append(box);
+        };
+        window.catDashShowRecovery = showRecovery;
+        window.addEventListener('error', event => {
+          const target = event.target;
+          if (target instanceof HTMLScriptElement && target.src.includes('/assets/')) showRecovery('asset:' + target.src);
+        }, true);
+        window.setTimeout(() => {
+          const canvas = document.querySelector('#game canvas');
+          if (!canvas || canvas.getBoundingClientRect().width < 10) showRecovery('canvas');
+        }, 10000);
+      })();
+    </script>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <title>貓咪跑酷 Cat Dash</title>
   </head>

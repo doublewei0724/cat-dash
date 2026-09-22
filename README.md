@@ -2,6 +2,8 @@
 
 手機直向的無盡跑酷遊戲。點擊、觸控、Space 或 ↑ 跳躍，空中可再跳一次。跳過紙箱、水坑與掃地機器人，收集小魚乾。分數為距離整數加小魚乾數量乘十。
 
+朋友測試網址：**https://doublewei0724.github.io/cat-dash/**
+
 ## 技術與目錄
 
 Vite、TypeScript、Phaser、Supabase、Vitest、Playwright、PWA。`src/main.ts` 放遊戲場景，`src/art.ts` 放自繪 placeholder，`src/config.ts` 放規則，`src/storage.ts` 放本機存檔，`src/supabase.ts` 放線上服務；SQL 位於 `supabase/migrations`。
@@ -41,5 +43,8 @@ npm run build
 `.github/workflows/deploy.yml` 會在每次 push 到 `main` 時執行 lint、typecheck、test、build，成功後發佈 `dist` 到 GitHub Pages。建立 GitHub repository 後，在 **Settings → Pages → Build and deployment → Source** 選 **GitHub Actions**。把 `.env` 中的 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY` 設為 repository Actions secrets，切勿提交 `.env` 或資料庫密碼。部署網址通常是 `https://<帳號>.github.io/<repository>/`；建置時 `VITE_BASE_PATH` 會自動對應 repository 名稱。
 
 網站使用 HTTPS，可在手機瀏覽器加入主畫面。已安裝的 PWA 在發現新版本時會顯示「更新遊戲」按鈕；玩家點擊後重新載入新版。為免遊戲中途被重載，不會強制更新正在進行的一局。
+
+- iPhone：以 Safari 開啟測試網址，按分享 → 加入主畫面，並選擇作為網頁 App 開啟。
+- Android：以 Chrome 開啟測試網址，從選單選「安裝應用程式」或「新增至主畫面」。
 
 無網路時仍能進入遊戲，最佳紀錄保存於本機；恢復連線後會重試最高的待提交紀錄。首頁顯示離線狀態，排行榜則提示無法載入。正式圖片可在 `src/art.ts` 的繪圖函式替換，音訊目前尚未接入，設定頁的音樂與音效開關會保存偏好。

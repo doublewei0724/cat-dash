@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { button, drawCat, fish, label, panel, street } from './art';
+import { playFish, playHit, playJump, startMusic, unlockAudio, vibrate } from './audio';
+import { button, type CatRig, drawCat, fish, label, panel, street } from './art';
 import { contentWidth, format, GROUND, H, PLAYER, RENDER_SCALE, scoreFor, setViewport, VERSION, W, worldSpeed } from './config';
 import { getProgress, getSettings, saveProgress, saveSettings, storeRun } from './storage';
 import { ensureProfile, getLeaderboard, getMyRank, getOrCreateSession, isOnline, submitRun, updateName, type RunResult } from './supabase';
@@ -84,7 +85,7 @@ type Obstacle = { x: number; width: number; height: number; kind: number; view: 
 type Pickup = { x: number; y: number; view: Phaser.GameObjects.Container; active: boolean };
 
 class GameScene extends Phaser.Scene {
-  private cat!: Phaser.GameObjects.Container;
+  private cat!: CatRig;
   private background!: Phaser.GameObjects.Container;
   private hudElements: Phaser.GameObjects.GameObject[] = [];
   private hint!: Phaser.GameObjects.Text;
@@ -137,7 +138,9 @@ class GameScene extends Phaser.Scene {
     if (this.ended || this.scene.isActive('Pause') || this.jumps >= PLAYER.maxJumps) return;
     this.velocity = PLAYER.jumpVelocity * (this.jumps ? .88 : 1);
     this.jumps++;
-    this.tweens.add({ targets: this.cat, angle: this.jumps === 2 ? 18 : -8, duration: 140, yoyo: true });
+    playJump();
+    vibrate(15);
+    this.tweens.add({ targets: this.cat.container, angle: this.jumps === 2 ? 12 : -6, duration: 140, yoyo: true });
   }
   private pause(): void { if (!this.ended && this.scene.isActive('Game') && !this.scene.isActive('Pause')) { this.scene.launch('Pause'); this.scene.pause(); } }
   reflow(deltaWidth: number): void {
@@ -149,8 +152,8 @@ class GameScene extends Phaser.Scene {
     }
     this.hint.x = W / 2;
     this.hint.setResolution(RENDER_SCALE);
-    this.cat.x = W * .27;
-    this.tweens.killTweensOf(this.background.list[1]);
+    this.cat.container.x = W * .27;
+    this.tweens.killTweensOf(this.background.getData('parallax') as Phaser.GameObjects.GameObject[]);
     this.background.destroy();
     this.background = street(this, true);
     this.children.sendToBack(this.background);
@@ -194,9 +197,27 @@ class GameScene extends Phaser.Scene {
     const speed = worldSpeed(this.elapsed);
     this.distance += speed * dt / 16;
     this.velocity += PLAYER.gravityY * dt;
+    const wasGrounded = this.catY >= GROUND - 27;
     this.catY = Math.min(GROUND - 27, this.catY + this.velocity * dt);
-    if (this.catY >= GROUND - 27) { this.velocity = 0; this.jumps = 0; this.cat.angle = 0; }
-    this.cat.y = this.catY + Math.sin(this.elapsed * 18) * (this.jumps ? 0 : 2);
+    const grounded = this.catY >= GROUND - 27;
+    if (grounded) { this.velocity = 0; this.jumps = 0; this.cat.container.angle = 0; }
+    this.cat.container.y = this.catY + Math.sin(this.elapsed * 18) * (this.jumps ? 0 : 2);
+    if (grounded) {
+      const cycle = this.elapsed * (16 + speed / 60);
+      this.cat.legFront.angle = Math.sin(cycle) * 26;
+      this.cat.legBack.angle = -Math.sin(cycle) * 26;
+      this.cat.tail.angle = Math.sin(this.elapsed * 5) * 9;
+      if (!wasGrounded) {
+        this.cat.container.setScale(this.cat.baseScale * 1.12, this.cat.baseScale * .86);
+        this.tweens.add({ targets: this.cat.container, scaleX: this.cat.baseScale, scaleY: this.cat.baseScale, duration: 110, ease: 'Back.easeOut' });
+      }
+    } else {
+      this.cat.legFront.angle = Phaser.Math.Linear(this.cat.legFront.angle, -32, .3);
+      this.cat.legBack.angle = Phaser.Math.Linear(this.cat.legBack.angle, 28, .3);
+      this.cat.tail.angle = Phaser.Math.Linear(this.cat.tail.angle, -16, .2);
+      const stretch = Phaser.Math.Clamp(-this.velocity / 2400, -.12, .12);
+      this.cat.container.setScale(this.cat.baseScale * (1 - stretch * .6), this.cat.baseScale * (1 + stretch));
+    }
     this.obstacleClock += dt; this.fishClock += dt;
     if (this.elapsed > 5 && this.obstacleClock > Math.max(1.1, Phaser.Math.Between(180, 260) / 100 / (speed / 280))) { this.spawnObstacle(); this.obstacleClock = 0; }
     if (this.fishClock > 2.4) { this.spawnFish(); this.fishClock = 0; }
@@ -204,7 +225,7 @@ class GameScene extends Phaser.Scene {
       if (!o.active) continue;
       o.x -= speed * dt * (o.kind === 2 ? 1.12 : 1); o.view.x = o.x;
       if (o.x < -55) { o.active = false; o.view.destroy(); continue; }
-      const overlapX = Math.abs(o.x - this.cat.x) < (o.width + 32) / 2;
+      const overlapX = Math.abs(o.x - this.cat.container.x) < (o.width + 32) / 2;
       const catBottom = this.catY + 24;
       if (overlapX && catBottom > GROUND - o.height + (o.kind === 1 ? 4 : 8)) { this.finish(); return; }
     }
@@ -212,8 +233,10 @@ class GameScene extends Phaser.Scene {
       if (!f.active) continue;
       f.x -= speed * dt; f.view.x = f.x;
       if (f.x < -30) { f.active = false; f.view.destroy(); continue; }
-      if (Math.abs(f.x - this.cat.x) < 28 && Math.abs(f.y - this.catY) < 37) {
+      if (Math.abs(f.x - this.cat.container.x) < 28 && Math.abs(f.y - this.catY) < 37) {
         f.active = false; this.fishCount++;
+        playFish();
+        vibrate(10);
         this.tweens.add({ targets: f.view, scale: 1.8, alpha: 0, duration: 180, onComplete: () => f.view.destroy() });
       }
     }
@@ -225,6 +248,8 @@ class GameScene extends Phaser.Scene {
   private finish(): void {
     if (this.ended) return;
     this.ended = true;
+    playHit();
+    vibrate([40, 30, 40]);
     const run: RunResult = { score: scoreFor(this.distance, this.fishCount), distanceM: Math.floor(this.distance), fishCount: this.fishCount, durationMs: Math.max(1000, Math.floor(this.elapsed * 1000)) };
     this.scene.start('GameOver', { run });
   }
@@ -377,6 +402,10 @@ const game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [BootScene, MenuScene, GameScene, PauseScene, GameOverScene, LeaderboardScene, SettingsScene]
 });
+
+const unlockOnce = (): void => { unlockAudio(); startMusic(); document.removeEventListener('pointerdown', unlockOnce); document.removeEventListener('keydown', unlockOnce); };
+document.addEventListener('pointerdown', unlockOnce);
+document.addEventListener('keydown', unlockOnce);
 
 let resizeFrame = 0;
 new ResizeObserver(() => {

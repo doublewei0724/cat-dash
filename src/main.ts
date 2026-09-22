@@ -72,7 +72,7 @@ class MenuScene extends Phaser.Scene {
     label(this, W/2, 259, '跳跳跳，追著小魚跑！', 17, '#876b5b');
     const mascot = drawCat(this, W/2, 431, 2.25);
     this.tweens.add({ targets: mascot.container, y: 427, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: [mascot.armFront, mascot.armBack], angle: 13, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: [mascot.armFront, mascot.armBack], angle: 4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     this.time.addEvent({ delay: 2600, loop: true, callback: () => {
       mascot.setExpression('blink');
       this.time.delayedCall(180, () => mascot.setExpression('run'));

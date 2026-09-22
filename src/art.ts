@@ -107,52 +107,44 @@ export function drawCat(scene: Phaser.Scene, x: number, y: number, scale = 1): C
   const tail = scene.add.graphics();
   const tailPath = (width: number, color: number): void => {
     tail.lineStyle(width, color);
-    const points = [[22, 31], [33, 33], [45, 28], [53, 19], [55, 9], [51, 0]];
+    const points = [[22, 26], [31, 28], [39, 24], [44, 17], [45, 9]];
     for (let i = 1; i < points.length; i++) tail.lineBetween(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1]);
     tail.fillStyle(color);
     for (const [px, py] of points) tail.fillCircle(px, py, width / 2);
   };
-  tailPath(9, C.ink);
-  tailPath(6, 0xe9a367);
-  tail.lineStyle(1.5, 0xffd49c).lineBetween(38, 31, 47, 26);
+  tailPath(8, C.ink);
+  tailPath(5, 0xe9a367);
+  tail.lineStyle(1.3, 0xffd49c).lineBetween(34, 26, 41, 22);
 
   const makeLeg = (side: -1 | 1): Phaser.GameObjects.Container => {
     const g = scene.add.graphics();
-    g.fillStyle(0xad663d).fillRoundedRect(-10, 2, 20, 13, 7);
-    g.lineStyle(2.3, C.ink).fillStyle(0xf5ae70).fillRoundedRect(-10, 0, 20, 13, 7).strokeRoundedRect(-10, 0, 20, 13, 7);
-    g.fillStyle(0xffd9ab).fillEllipse(-3, 4, 9, 3);
-    g.fillStyle(0xffe6c3).fillCircle(0, 9, 3);
-    return scene.add.container(side * 14, 31, [g]);
+    g.fillStyle(0xf4aa70).fillEllipse(0, 7, 20, 13);
+    g.fillStyle(0xffe6c3).fillEllipse(0, 9, 9, 4);
+    return scene.add.container(side * 14, 36, [g]);
   };
   const legBack = makeLeg(-1);
   const legFront = makeLeg(1);
 
   const makeArm = (side: -1 | 1): Phaser.GameObjects.Container => {
     const arm = scene.add.graphics();
-    arm.lineStyle(11, C.ink).lineBetween(0, 0, side * 2, 10);
-    arm.lineStyle(7, 0xf4af76).lineBetween(0, 0, side * 2, 10);
-    arm.lineStyle(2, C.ink).fillStyle(0xffd5a4).fillEllipse(side * 2, 11, 14, 11).strokeEllipse(side * 2, 11, 14, 11);
-    arm.fillStyle(0xffeee0).fillEllipse(side * 2, 9, 6, 3);
-    return scene.add.container(side * 18, 11, [arm]);
+    arm.lineStyle(1.7, C.ink).fillStyle(0xf3ab70).fillRoundedRect(-6, 0, 12, 18, 6).strokeRoundedRect(-6, 0, 12, 18, 6);
+    arm.fillStyle(0xffd7aa).fillEllipse(0, 15, 13, 9);
+    arm.lineStyle(1, 0xc77e58).lineBetween(-2, 15, -2, 18).lineBetween(2, 15, 2, 18);
+    return scene.add.container(side * 17, 12, [arm]);
   };
   const armBack = makeArm(-1);
   const armFront = makeArm(1);
 
   const g = scene.add.graphics();
-  // Offset color layers give the mascot soft volume without loading raster assets.
-  g.fillStyle(0x9c5d3b).fillRoundedRect(-27, 0, 54, 44, 21);
+  // One clean outline per body part avoids doubled shadows at the chin and feet.
   g.lineStyle(2.5, C.ink).fillStyle(0xe9965a).fillRoundedRect(-27, -4, 54, 46, 20).strokeRoundedRect(-27, -4, 54, 46, 20);
-  g.fillStyle(0xffc689, .8).fillEllipse(-11, 8, 19, 29);
   g.fillStyle(0xffe9ca).fillEllipse(0, 18, 32, 29);
-  g.fillStyle(0xffffff, .55).fillEllipse(-6, 11, 11, 7);
   g.lineStyle(2.5, C.ink).fillStyle(0xc67a49).fillTriangle(-30, -25, -23, -52, -6, -30).strokeTriangle(-30, -25, -23, -52, -6, -30);
   g.fillTriangle(6, -30, 23, -52, 30, -25).strokeTriangle(6, -30, 23, -52, 30, -25);
   g.fillStyle(0xf4a7a0).fillTriangle(-24, -35, -21, -47, -12, -33).fillTriangle(12, -33, 21, -47, 24, -35);
   g.fillStyle(0xffd4b6, .8).fillTriangle(-20, -40, -19, -44, -16, -39).fillTriangle(16, -39, 19, -44, 20, -40);
-  g.fillStyle(0xc47d4b).fillEllipse(0, -16, 62, 50);
   g.lineStyle(2.5, C.ink).fillStyle(0xf2a768).fillEllipse(0, -19, 62, 50).strokeEllipse(0, -19, 62, 50);
-  g.fillStyle(0xffd19a, .9).fillEllipse(-12, -29, 35, 26);
-  g.fillStyle(0xffe4ba, .7).fillEllipse(-19, -22, 18, 16);
+  g.fillStyle(0xffc993, .65).fillEllipse(-13, -36, 18, 6);
   g.fillStyle(0xffefd6).fillEllipse(0, -6, 34, 20);
   g.fillStyle(0xd87e4c).fillRoundedRect(-7, -44, 14, 10, 5);
   g.fillRoundedRect(-26, -33, 9, 5, 3).fillRoundedRect(17, -33, 9, 5, 3);

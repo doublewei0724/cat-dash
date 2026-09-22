@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
-import { GROUND, H, W } from './config';
+import { GROUND, H, RENDER_SCALE, W } from './config';
 
 const C = { ink: 0x594238, cream: 0xfff9eb, orange: 0xf4a660, mint: 0xa9d8c0, sky: 0xc8e9e3 };
 export function label(scene: Phaser.Scene, x: number, y: number, value: string, size = 18, color = '#594238', bold = true): Phaser.GameObjects.Text {
-  return scene.add.text(x, y, value, { fontFamily: 'Nunito, Noto Sans TC, sans-serif', fontSize: `${size}px`, fontStyle: bold ? '900' : '700', color, align: 'center' }).setOrigin(.5);
+  return scene.add.text(x, y, value, { fontFamily: 'Nunito, Noto Sans TC, sans-serif', fontSize: `${size}px`, fontStyle: bold ? '900' : '700', color, align: 'center', resolution: RENDER_SCALE }).setOrigin(.5);
 }
 export function panel(scene: Phaser.Scene, x: number, y: number, width: number, height: number, fill = C.cream, radius = 24): Phaser.GameObjects.Graphics {
   const g = scene.add.graphics();
@@ -13,6 +13,9 @@ export function panel(scene: Phaser.Scene, x: number, y: number, width: number, 
   return g;
 }
 export function button(scene: Phaser.Scene, x: number, y: number, width: number, height: number, value: string, action: () => void, fill = C.orange): Phaser.GameObjects.Container {
+  const cssScale = document.querySelector('#game')!.clientHeight / H;
+  width = Math.max(width, 44 / cssScale);
+  height = Math.max(height, 44 / cssScale);
   const g = scene.add.graphics();
   g.fillStyle(C.ink, .3).fillRoundedRect(-width/2, -height/2 + 5, width, height, 16);
   g.fillStyle(fill).fillRoundedRect(-width/2, -height/2, width, height, 16);
@@ -55,10 +58,10 @@ export function drawCat(scene: Phaser.Scene, x: number, y: number, scale = 1): P
 }
 export function street(scene: Phaser.Scene, moving = false): Phaser.GameObjects.Container {
   const sky = scene.add.graphics().fillStyle(C.sky).fillRect(0, 0, W, H);
-  sky.fillStyle(0xfff5d5).fillCircle(318, 168, 56);
-  sky.fillStyle(0xffffff, .8).fillEllipse(73, 137, 115, 32).fillEllipse(239, 223, 82, 24);
+  sky.fillStyle(0xfff5d5).fillCircle(W - 72, 168, 56);
+  sky.fillStyle(0xffffff, .8).fillEllipse(73, 137, 115, 32).fillEllipse(W * .62, 223, 82, 24);
   sky.fillStyle(0xb7d6c7).fillRect(0, 460, W, 120);
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < Math.ceil(W / 100) + 1; i++) {
     const bx = i * 100 - 25;
     sky.fillStyle(i % 2 ? 0xf7d6ae : 0xffeed1).fillRect(bx, 366 + (i % 2) * 35, 80, 190);
     sky.fillStyle(0xb98773).fillTriangle(bx - 8, 367 + (i % 2) * 35, bx + 40, 330 + (i % 2) * 35, bx + 88, 367 + (i % 2) * 35);
@@ -70,7 +73,7 @@ export function street(scene: Phaser.Scene, moving = false): Phaser.GameObjects.
   sky.fillStyle(0x7c5d4d).fillRect(0, GROUND, W, 8);
   sky.fillStyle(0xf6d4ae).fillRect(0, GROUND + 8, W, H - GROUND);
   const decor = scene.add.graphics();
-  for (let i = 0; i < 8; i++) decor.fillStyle(0xffffff, .5).fillRoundedRect(i * 68 - 15, 745, 36, 6, 3);
+  for (let i = 0; i < Math.ceil(W / 68) + 1; i++) decor.fillStyle(0xffffff, .5).fillRoundedRect(i * 68 - 15, 745, 36, 6, 3);
   const c = scene.add.container(0, 0, [sky, decor]);
   if (moving) scene.tweens.add({ targets: decor, x: -68, duration: 600, repeat: -1, onRepeat: () => { decor.x = 0; } });
   return c;

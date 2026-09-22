@@ -1,8 +1,19 @@
-export const W = 390;
+export let W = 390;
 export const H = 844;
 export const GROUND = 666;
 export const VERSION = '0.1.0';
+export let RENDER_SCALE = 1;
 export const PLAYER = { gravityY: 1800, jumpVelocity: -680, maxJumps: 2 } as const;
+
+export function setViewport(width: number, height: number): void {
+  W = Math.round(width * H / Math.max(height, 1));
+  const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+  RENDER_SCALE = Math.min(4, dpr * height / H);
+}
+
+export function contentWidth(gutter = 44, max = 500): number {
+  return Math.min(W - gutter, max);
+}
 
 export function worldSpeed(seconds: number): number {
   if (seconds < 20) return 280 + seconds * 3;

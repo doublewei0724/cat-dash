@@ -19,3 +19,35 @@ test('offline game opens, starts and pauses', async ({ page }) => {
   await page.locator('canvas').click({ position: { x: 195, y: 755 } });
   await expect(page.locator('#game')).toHaveAttribute('data-scene', 'menu');
 });
+
+test('fits phone and tablet widths with a high density canvas', async ({ browser }) => {
+  for (const viewport of [{ width: 360, height: 640 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 2 });
+    const page = await context.newPage();
+    await page.goto('/');
+    await page.getByRole('button', { name: '儲存暱稱' }).click();
+    await expect(page.locator('#game')).toHaveAttribute('data-scene', 'menu');
+    const canvas = page.locator('canvas');
+    const box = await canvas.boundingBox();
+    const backing = await canvas.evaluate(element => ({ width: element.width, height: element.height }));
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeCloseTo(Math.min(viewport.width, 768), 0);
+    expect(box!.height).toBeCloseTo(viewport.height, 0);
+    expect(backing.width / box!.width).toBeGreaterThanOrEqual(1.95);
+    expect(backing.height / box!.height).toBeGreaterThanOrEqual(1.95);
+    if (viewport.width === 360) await page.screenshot({ path: 'test-results/phone-menu.png' });
+    await canvas.click({ position: { x: box!.width / 2, y: 609 * box!.height / 844 } });
+    await expect(page.locator('#game')).toHaveAttribute('data-scene', 'game');
+    if (viewport.width === 768) {
+      await page.screenshot({ path: 'test-results/tablet.png' });
+      await page.setViewportSize({ width: 600, height: 900 });
+      await expect(canvas).toHaveCSS('width', '600px');
+      await expect(page.locator('#game')).toHaveAttribute('data-scene', 'game');
+      await canvas.click({ position: { x: 538, y: 167 } });
+      await expect(page.locator('#game')).toHaveAttribute('data-scene', 'pause');
+      await canvas.click({ position: { x: 300, y: 403 } });
+      await expect(page.locator('#game')).toHaveAttribute('data-scene', 'game');
+    }
+    await context.close();
+  }
+});
